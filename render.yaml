@@ -1,8 +1,13 @@
 services:
   - type: web
     name: equipos-webapp
-    runtime: static
+    runtime: node
     rootDir: webapp
     plan: free
     autoDeploy: true
-    staticPublishPath: public
+    buildCommand: npm install
+    startCommand: npm start
+    envVars:
+      - key: NODE_VERSION
+        value: 18
+    healthCheckPath: /health
