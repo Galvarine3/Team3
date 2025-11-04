@@ -1,0 +1,71 @@
+<!doctype html>
+<html lang="es">
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1" />
+  <title>Equipos de Fútbol</title>
+  <link rel="stylesheet" href="styles.css" />
+</head>
+<body>
+  <header class="topbar">
+    <h1>Equipos de Fútbol</h1>
+  </header>
+
+  <main class="container">
+    <section class="controls">
+      <h2>Selecciona jugadores y cantidad</h2>
+      <div class="indicator">
+        <span id="enabledCount">Habilitados: 0</span>
+      </div>
+      <div class="row">
+        <label for="countInput">Cantidad de jugadores</label>
+        <input id="countInput" type="text" inputmode="numeric" placeholder="10" />
+        <button id="generateBtn">Generar equipos</button>
+      </div>
+      <p class="error" id="errorMsg"></p>
+    </section>
+
+    <section class="list">
+      <h3>Jugadores (toca para seleccionar)</h3>
+      <ul id="playersList" class="players"></ul>
+    </section>
+
+    <section class="results">
+      <div class="teams">
+        <div class="team" id="teamA">
+          <h3 id="teamATitle">Equipo A</h3>
+          <ul id="teamAList"></ul>
+        </div>
+        <div class="team" id="teamB">
+          <h3 id="teamBTitle">Equipo B</h3>
+          <ul id="teamBList"></ul>
+        </div>
+      </div>
+    </section>
+  </main>
+
+  <dialog id="adminDialog">
+    <form method="dialog" class="admin">
+      <h2>Menú secreto</h2>
+      <div class="edit-block">
+        <h3>Editar puntuaciones existentes</h3>
+        <div class="edit-list" id="editList"></div>
+      </div>
+      <div class="add-block">
+        <h3>Agregar nuevo jugador</h3>
+        <div class="row">
+          <input id="newName" type="text" placeholder="Nombre" />
+          <input id="newRating" type="text" inputmode="decimal" placeholder="Puntaje (1.0-10.0)" />
+          <button id="addPlayerBtn" type="button">Agregar</button>
+        </div>
+      </div>
+      <div class="dialog-actions">
+        <button id="saveChangesBtn" type="button" class="primary">Guardar cambios</button>
+        <button id="closeDialogBtn" type="submit">Cerrar</button>
+      </div>
+    </form>
+  </dialog>
+  
+  <script src="app.js"></script>
+</body>
+</html>
