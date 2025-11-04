@@ -7,18 +7,22 @@
     <link rel="stylesheet" href="/styles.css" />
   </head>
   <body>
-    <header class="container">
-      <h1>Equipos</h1>
-      <nav>
-        <a href="/">Inicio</a>
-        <a href="/health" target="_blank" rel="noopener">Health</a>
-      </nav>
+    <header class="appbar">
+      <div class="container bar">
+        <div class="title">
+          <span>⚽</span>
+          <span>Equipos</span>
+        </div>
+        <div class="actions">
+          <button id="action-language" title="Idioma">🌐</button>
+          <button id="action-history" title="Historial">🕘</button>
+          <button id="action-info" title="Info">ℹ️</button>
+        </div>
+      </div>
     </header>
 
     <main class="container">
       <section>
-        <h2>Webapp lista para Render</h2>
-        <p>Demo mínima para gestionar <strong>equipos</strong> (listar, crear y eliminar).</p>
         <div id="app"></div>
       </section>
     </main>
