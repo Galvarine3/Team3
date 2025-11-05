@@ -166,7 +166,11 @@ function generateBalancedTeams(chosen){
     const toA = objectiveAfter(true, p);
     const toB = objectiveAfter(false, p);
     if (toA < toB){ teamA.push(p); aA+=p.attack; dA+=p.defense; sA+=p.skill; }
-    else { teamB.push(p); aB+=p.attack; dB+=p.defense; sB+=p.skill; }
+    else if (toB < toA){ teamB.push(p); aB+=p.attack; dB+=p.defense; sB+=p.skill; }
+    else { // tie: random side to break determinism
+      if (Math.random() < 0.5){ teamA.push(p); aA+=p.attack; dA+=p.defense; sA+=p.skill; }
+      else { teamB.push(p); aB+=p.attack; dB+=p.defense; sB+=p.skill; }
+    }
   }
   while (Math.abs(teamA.length - teamB.length) > 1){
     if (teamA.length > teamB.length){
@@ -178,6 +182,49 @@ function generateBalancedTeams(chosen){
     }
   }
   return [teamA, teamB];
+}
+
+function teamCost(aA,dA,sA,aB,dB,sB){
+  const da=aA-aB, dd=dA-dB, ds=sA-sB; return da*da+dd*dd+ds*ds;
+}
+
+function evaluateTeams(a,b){
+  const sums = (t)=>t.reduce((acc,p)=>{acc[0]+=p.attack; acc[1]+=p.defense; acc[2]+=p.skill; return acc;}, [0,0,0]);
+  const [aA,dA,sA]=sums(a); const [aB,dB,sB]=sums(b);
+  return teamCost(aA,dA,sA,aB,dB,sB);
+}
+
+function teamsSignature(a,b){
+  const sa = a.map(p=>p.name).sort().join('|');
+  const sb = b.map(p=>p.name).sort().join('|');
+  return sa < sb ? `${sa}__${sb}` : `${sb}__${sa}`;
+}
+
+function generateBalancedTeamsStochastic(chosen, attempts=7){
+  let best = null; let bestCost = Infinity; const results = [];
+  for (let i=0;i<attempts;i++){
+    // jitter by shuffling the chosen set slightly each attempt
+    const perm = chosen.slice().sort(()=>Math.random()-0.5);
+    let [a,b] = generateBalancedTeams(perm);
+    // local improvement: try one beneficial swap randomly a few times
+    for (let k=0;k<3;k++){
+      if (!a.length || !b.length) break;
+      const ai = Math.floor(Math.random()*a.length);
+      const bi = Math.floor(Math.random()*b.length);
+      const a1 = a.slice(), b1 = b.slice();
+      const pa = a1[ai], pb = b1[bi];
+      a1[ai] = pb; b1[bi] = pa;
+      if (evaluateTeams(a1,b1) <= evaluateTeams(a,b)) { a = a1; b = b1; }
+    }
+    const cost = evaluateTeams(a,b);
+    results.push({a,b,cost});
+    if (cost < bestCost){ bestCost = cost; best = {a,b}; }
+  }
+  // pick randomly among top 3 results to increase diversity
+  results.sort((x,y)=>x.cost - y.cost);
+  const pick = results.slice(0, Math.min(3, results.length));
+  const r = pick[Math.floor(Math.random()*pick.length)] || best;
+  return [r.a, r.b];
 }
 
 function avg(list){ if(!list.length) return 0; return list.reduce((s,p)=>s+rating(p),0)/list.length; }
@@ -373,9 +420,16 @@ function render(appState){
     const restCount = n - mustInclude.length;
     const restPool = selected.filter(p=>!p.isGoalkeeper);
     const chosen = mustInclude.concat(restPool.sort(()=>Math.random()-0.5).slice(0, restCount)).sort(()=>Math.random()-0.5);
-    let [a,b] = generateBalancedTeams(chosen);
-    if (Math.random() < 0.5) { const tmp = a; a = b; b = tmp; }
-    appState.teamA = a; appState.teamB = b; appState.showResults = true;
+    let tries = 0;
+    const prevSig = appState.lastSig || '';
+    let a, b, sig = '';
+    do {
+      [a,b] = generateBalancedTeamsStochastic(chosen, 9);
+      if (Math.random() < 0.5) { const tmp = a; a = b; b = tmp; }
+      sig = teamsSignature(a,b);
+      tries++;
+    } while (sig === prevSig && tries < 12);
+    appState.teamA = a; appState.teamB = b; appState.showResults = true; appState.lastSig = sig;
     render(appState);
   });
 
@@ -403,7 +457,8 @@ function init(){
     count: Math.min(10, Math.max(2, players.length)),
     teamA: [],
     teamB: [],
-    showResults: true
+    showResults: true,
+    lastSig: ''
   };
   render(state);
 
