@@ -142,8 +142,8 @@ function formatSavedMatchText(m){
 function generateBalancedTeams(chosen){
   if (!chosen || !chosen.length) return [[], []];
   const byRating = (a,b)=> (rating(b)-rating(a));
-  const goalkeepers = chosen.filter(p=>p.isGoalkeeper).sort(byRating);
-  const rest = chosen.filter(p=>!p.isGoalkeeper).sort(byRating);
+  const goalkeepers = chosen.filter(p=>p.isGoalkeeper).slice().sort(()=>Math.random()-0.5);
+  const rest = chosen.filter(p=>!p.isGoalkeeper).slice().sort((a,b)=> (rating(b)-rating(a)) || (Math.random()-0.5));
   const teamA = [], teamB = [];
   let aA=0, dA=0, sA=0, aB=0, dB=0, sB=0;
   function objectiveAfter(addToA, p){
@@ -368,12 +368,13 @@ function render(appState){
     const selected = appState.players.filter(p=>appState.selected.has(p.name));
     if (n < 2) { alert('El mínimo es 2'); return; }
     if (n > selected.length) { alert('No hay suficientes jugadores seleccionados'); return; }
-    const gks = selected.filter(p=>p.isGoalkeeper);
+    const gks = selected.filter(p=>p.isGoalkeeper).slice().sort(()=>Math.random()-0.5);
     const mustInclude = gks.length >= 2 && n >= 2 ? gks.slice(0,2) : gks.slice(0, Math.min(gks.length, n));
     const restCount = n - mustInclude.length;
     const restPool = selected.filter(p=>!p.isGoalkeeper);
-    const chosen = mustInclude.concat(restPool.sort(()=>Math.random()-0.5).slice(0, restCount));
-    const [a,b] = generateBalancedTeams(chosen);
+    const chosen = mustInclude.concat(restPool.sort(()=>Math.random()-0.5).slice(0, restCount)).sort(()=>Math.random()-0.5);
+    let [a,b] = generateBalancedTeams(chosen);
+    if (Math.random() < 0.5) { const tmp = a; a = b; b = tmp; }
     appState.teamA = a; appState.teamB = b; appState.showResults = true;
     render(appState);
   });
