@@ -1,117 +1,641 @@
-// Basic client script
 const app = document.getElementById('app');
 
-async function fetchEquipos() {
-  const res = await fetch('/api/equipos');
-  if (!res.ok) throw new Error('Error cargando equipos');
-  return res.json();
-}
+const PREFS_KEY = 'equipos_web_players_v1';
+const MATCHES_KEY = 'equipos_web_matches_v1';
 
-async function createEquipo(nombre) {
-  const res = await fetch('/api/equipos', {
-    method: 'POST',
-    headers: { 'Content-Type': 'application/json' },
-    body: JSON.stringify({ nombre })
-  });
-  if (!res.ok) throw new Error('No se pudo crear');
-  return res.json();
-}
+const initialPlayers = [
+  { name: 'Rulo', attack: 5.0, defense: 8.0, skill: 8.0, isGoalkeeper: false },
+  { name: 'Ariel',  attack: 7.9, defense: 8.4, skill: 8.4, isGoalkeeper: false },
+  { name: 'Diego',  attack: 7.3, defense: 7.4, skill: 7.3, isGoalkeeper: false },
+  { name: 'Jaime',  attack: 7.2, defense: 7.5, skill: 7.6, isGoalkeeper: false },
+  { name: 'Pablo V',attack: 8.0, defense: 8.0, skill: 8.0, isGoalkeeper: false },
+  { name: 'Carlitos',attack: 7.0, defense: 7.5, skill: 7.5, isGoalkeeper: false },
+  { name: 'Seba',   attack: 7.5, defense: 6.8, skill: 7.6, isGoalkeeper: false },
+  { name: 'Feña',   attack: 6.5, defense: 7.0, skill: 6.7, isGoalkeeper: false },
+  { name: 'Gustavo (P)', attack: 7.3, defense: 7.3, skill: 7.2, isGoalkeeper: false },
+  { name: 'Tío Seba', attack: 6.2, defense: 7.0, skill: 6.1, isGoalkeeper: false },
+  { name: 'Manuel', attack: 7.3, defense: 7.6, skill: 7.6, isGoalkeeper: false },
+  { name: 'Pablo P', attack: 6.8, defense: 6.6, skill: 7.2, isGoalkeeper: false },
+  { name: 'Kevin',  attack: 7.7, defense: 7.1, skill: 7.0, isGoalkeeper: false },
+  { name: 'David',  attack: 7.2, defense: 6.9, skill: 7.2, isGoalkeeper: false },
+  { name: 'Benja',  attack: 7.3, defense: 7.5, skill: 7.5, isGoalkeeper: false },
+  { name: 'Juan',   attack: 7.1, defense: 7.4, skill: 7.2, isGoalkeeper: false },
+  { name: 'Marín',  attack: 7.2, defense: 7.5, skill: 7.7, isGoalkeeper: false },
+  { name: 'Felipe Ep', attack: 7.2, defense: 7.0, skill: 7.5, isGoalkeeper: false },
+  { name: 'Chiqui', attack: 8.8, defense: 7.8, skill: 8.2, isGoalkeeper: false },
+  { name: 'Bubu',   attack: 7.6, defense: 7.2, skill: 7.3, isGoalkeeper: false },
+  { name: 'Vicho',  attack: 8.8, defense: 8.4, skill: 8.8, isGoalkeeper: false },
+  { name: 'Emilio', attack: 8.8, defense: 7.6, skill: 8.5, isGoalkeeper: false },
+  { name: 'Jesús',  attack: 7.3, defense: 7.3, skill: 7.3, isGoalkeeper: false },
+  { name: 'Shuvert',attack: 7.3, defense: 7.5, skill: 7.7, isGoalkeeper: false },
+  { name: 'Gastón', attack: 7.8, defense: 7.5, skill: 8.0, isGoalkeeper: false },
+  { name: 'Richard',attack: 7.5, defense: 7.5, skill: 7.8, isGoalkeeper: false },
+  { name: 'Víctor', attack: 7.4, defense: 7.4, skill: 7.4, isGoalkeeper: false },
+  { name: 'Gustavo Riquelme', attack: 7.1, defense: 7.1, skill: 7.1, isGoalkeeper: false },
+  { name: 'Navaloco', attack: 6.7, defense: 6.4, skill: 6.3, isGoalkeeper: false }
+];
 
-async function deleteEquipo(id) {
-  const res = await fetch(`/api/equipos/${id}`, { method: 'DELETE' });
-  if (!res.ok) throw new Error('No se pudo borrar');
-  return res.json();
-}
+function rating(p){ return (p.attack + p.defense + p.skill) / 3.0; }
 
-function renderList(items) {
-  const list = document.getElementById('list');
-  if (!items.length) {
-    list.innerHTML = '<p>No hay equipos aún.</p>';
-    return;
+function loadPlayers(){
+  try {
+    const raw = localStorage.getItem(PREFS_KEY);
+    if (!raw) return initialPlayers.slice();
+    const arr = JSON.parse(raw);
+    if (!Array.isArray(arr)) return initialPlayers.slice();
+    return arr;
+  } catch {
+    return initialPlayers.slice();
   }
-  list.innerHTML = items
-    .map(
-      (e) => `
-      <li class="row">
-        <span>${e.nombre}</span>
-        <button data-id="${e.id}" class="danger">Eliminar</button>
-      </li>`
-    )
-    .join('');
+}
 
-  list.querySelectorAll('button[data-id]').forEach((btn) => {
-    btn.addEventListener('click', async () => {
-      btn.disabled = true;
-      try {
-        await deleteEquipo(btn.dataset.id);
-        await init();
-      } catch (e) {
-        alert(e.message);
-      } finally {
-        btn.disabled = false;
+function savePlayers(players){
+  localStorage.setItem(PREFS_KEY, JSON.stringify(players));
+}
+
+function loadMatches(){
+  try {
+    const raw = localStorage.getItem(MATCHES_KEY);
+    if (!raw) return [];
+    const arr = JSON.parse(raw);
+    return Array.isArray(arr) ? arr : [];
+  } catch { return []; }
+}
+
+function saveMatches(list){
+  localStorage.setItem(MATCHES_KEY, JSON.stringify(list));
+}
+
+function addMatch(titleA, titleB, teamA, teamB){
+  const current = loadMatches();
+  const now = Date.now();
+  const m = { id: now, time: now, titleA, titleB, teamA, teamB, result: '' };
+  current.unshift(m);
+  saveMatches(current);
+}
+
+function deleteMatch(id){
+  const current = loadMatches();
+  const updated = current.filter(m=>m.id!==id);
+  saveMatches(updated);
+}
+
+function clearAllMatches(){ saveMatches([]); }
+
+function updateMatchResult(id, result){
+  const updated = loadMatches().map(m=> m.id===id ? ({...m, result}) : m);
+  saveMatches(updated);
+}
+
+function formatTeamBlock(title, team){
+  const avg = team.length ? (team.reduce((s,p)=>s+rating(p),0)/team.length).toFixed(2) : '0.00';
+  const header = `${title} (${team.length}) - Promedio: ${avg}`;
+  const body = team.map(p=>`• ${p.isGoalkeeper? '(GK) ':''}${p.name}`).join('\n');
+  return `${header}\n${body}`;
+}
+
+function formatTeamsText(titleA, titleB, teamA, teamB){
+  const a = formatTeamBlock(titleA, teamA);
+  const b = formatTeamBlock(titleB, teamB);
+  return `${a}\n\n${b}`;
+}
+
+function formatSavedMatchText(m){
+  const a = formatTeamBlock(m.titleA, m.teamA);
+  const b = formatTeamBlock(m.titleB, m.teamB);
+  const res = m.result && m.result.trim() ? `\n\nResultado: ${m.result.trim()}` : '';
+  return `${a}\n\n${b}${res}`;
+}
+
+function generateBalancedTeams(chosen){
+  if (!chosen || !chosen.length) return [[], []];
+  const byRating = (a,b)=> (rating(b)-rating(a));
+  const goalkeepers = chosen.filter(p=>p.isGoalkeeper).sort(byRating);
+  const rest = chosen.filter(p=>!p.isGoalkeeper).sort(byRating);
+  const teamA = [], teamB = [];
+  let aA=0, dA=0, sA=0, aB=0, dB=0, sB=0;
+  function objectiveAfter(addToA, p){
+    const naA = addToA ? aA + p.attack : aA;
+    const ndA = addToA ? dA + p.defense : dA;
+    const nsA = addToA ? sA + p.skill : sA;
+    const naB = addToA ? aB : aB + p.attack;
+    const ndB = addToA ? dB : dB + p.defense;
+    const nsB = addToA ? sB : sB + p.skill;
+    const da = naA - naB, dd = ndA - ndB, ds = nsA - nsB;
+    return da*da + dd*dd + ds*ds;
+  }
+  if (goalkeepers.length >= 2){
+    const gkA = goalkeepers[0], gkB = goalkeepers[1];
+    teamA.push(gkA); aA+=gkA.attack; dA+=gkA.defense; sA+=gkA.skill;
+    teamB.push(gkB); aB+=gkB.attack; dB+=gkB.defense; sB+=gkB.skill;
+  }
+  const pool = (goalkeepers.length>=2? rest : goalkeepers.concat(rest));
+  for (const p of pool){
+    const toA = objectiveAfter(true, p);
+    const toB = objectiveAfter(false, p);
+    if (toA < toB){ teamA.push(p); aA+=p.attack; dA+=p.defense; sA+=p.skill; }
+    else { teamB.push(p); aB+=p.attack; dB+=p.defense; sB+=p.skill; }
+  }
+  while (Math.abs(teamA.length - teamB.length) > 1){
+    if (teamA.length > teamB.length){
+      const moved = teamA.pop();
+      teamB.push(moved); aA-=moved.attack; dA-=moved.defense; sA-=moved.skill; aB+=moved.attack; dB+=moved.defense; sB+=moved.skill;
+    } else {
+      const moved = teamB.pop();
+      teamA.push(moved); aB-=moved.attack; dB-=moved.defense; sB-=moved.skill; aA+=moved.attack; dA+=moved.defense; sA+=moved.skill;
+    }
+  }
+  return [teamA, teamB];
+}
+
+function avg(list){ if(!list.length) return 0; return list.reduce((s,p)=>s+rating(p),0)/list.length; }
+
+function i18n(){
+  const en = {
+    selectPlayersAndCount: 'Select players and count',
+    enabledCount: (n)=>`Enabled: ${n}`,
+    edit: 'Edit',
+    selectAll: 'Select all',
+    playersCount: (n)=>`Players count: ${n}`,
+    generate: 'Generate',
+    create: 'Create',
+    undo: 'Undo',
+    playersTapToSelect: 'Players (tap to select)',
+    teamA: 'Team A',
+    teamB: 'Team B',
+    avg: (v)=>`Average: ${v.toFixed(2)}`,
+    hideResults: 'Hide results',
+    showResults: 'Show results',
+    share: 'Share',
+    saveMatch: 'Save match',
+    history: 'History',
+    close: 'Close',
+    clearHistory: 'Clear history',
+    delete: 'Delete',
+    result: 'Result'
+  };
+  const es = {
+    selectPlayersAndCount: 'Selecciona jugadores y cantidad',
+    enabledCount: (n)=>`Habilitados: ${n}`,
+    edit: 'Editar',
+    selectAll: 'Seleccionar todo',
+    playersCount: (n)=>`Cantidad de jugadores: ${n}`,
+    generate: 'Generar',
+    create: 'Crear',
+    undo: 'Deshacer',
+    playersTapToSelect: 'Jugadores (toca para seleccionar)',
+    teamA: 'Equipo A',
+    teamB: 'Equipo B',
+    avg: (v)=>`Promedio: ${v.toFixed(2)}`,
+    hideResults: 'Ocultar resultados',
+    showResults: 'Mostrar resultados',
+    share: 'Compartir',
+    saveMatch: 'Guardar partido',
+    history: 'Historial',
+    close: 'Cerrar',
+    clearHistory: 'Limpiar historial',
+    delete: 'Eliminar',
+    result: 'Resultado'
+  };
+  return window.__lang === 'en' ? en : es;
+}
+
+function render(appState){
+  const t = i18n();
+  const selectedPlayers = appState.players.filter(p=>appState.selected.has(p.name));
+  const allSelected = appState.players.length>0 && appState.selected.size === appState.players.length;
+  const titleA = appState.teamATitle || t.teamA;
+  const titleB = appState.teamBTitle || t.teamB;
+
+  app.innerHTML = `
+    <div class="card">
+      <p style="margin:0 0 8px; font-weight:600">${t.selectPlayersAndCount}</p>
+      <div class="row" style="justify-content:space-between">
+        <span>${t.enabledCount(selectedPlayers.length)}</span>
+        <button id="btn-edit">${t.edit}</button>
+      </div>
+      <div class="row" style="margin-top:6px">
+        <input type="checkbox" id="chk-all" ${allSelected?'checked':''} />
+        <label for="chk-all">${t.selectAll}</label>
+      </div>
+      <div style="margin-top:8px">
+        <div>${t.playersCount(appState.count)}</div>
+        <input id="slider" type="range" min="2" max="22" step="1" value="${appState.count}" style="width:100%" />
+      </div>
+
+      <div class="row" style="margin-top:12px; gap:8px">
+        <button id="btn-generate" class="btn-lg" style="flex:1">${t.generate}</button>
+        <button id="btn-create" class="btn-lg" style="flex:1">${t.create}</button>
+        <button id="btn-undo" class="btn-lg" style="flex:0.8">${t.undo}</button>
+      </div>
+
+      <div style="margin-top:12px; border-top:1px solid var(--divider);"></div>
+      <div style="margin-top:12px">
+        <div style="max-height:420px; overflow:auto">
+          <ul id="players">
+            ${appState.players.map(p=>{
+              const checked = appState.selected.has(p.name)?'checked':'';
+              const gk = p.isGoalkeeper? ' (GK)' : '';
+              return `<li class="row" style="justify-content:space-between; padding:8px 0">
+                <label class="row" style="gap:6px"><input type="checkbox" data-name="${p.name}" ${checked} /> ${p.name}${gk}</label>
+                <span style="opacity:.7">${rating(p).toFixed(2)}</span>
+              </li>`
+            }).join('')}
+          </ul>
+        </div>
+      </div>
+
+      ${appState.teamA.length && appState.teamB.length ? `
+      <div class="row" style="margin-top:12px; justify-content:space-between">
+        <button id="btn-toggle">${appState.showResults ? t.hideResults : t.showResults}</button>
+        <div class="row" style="gap:8px">
+          <button id="btn-share">${t.share}</button>
+          <button id="btn-save">${t.saveMatch}</button>
+        </div>
+      </div>
+      ${appState.showResults ? `
+      <div class="row" style="gap:12px; align-items:flex-start; margin-top:8px">
+        <div style="flex:1" class="card">
+          <h3 style="margin:0 0 6px" class="row" style="align-items:center; gap:8px">
+            <span style="flex:1">${titleA}</span>
+            <button id="rename-a" title="${t.edit}">✎</button>
+          </h3>
+          <small>${t.avg(avg(appState.teamA))}</small>
+          <ul style="margin-top:8px">
+            ${appState.teamA.map(p=>`<li>• ${p.name}${p.isGoalkeeper? ' (GK)':''}</li>`).join('')}
+          </ul>
+        </div>
+        <div style="flex:1" class="card">
+          <h3 style="margin:0 0 6px" class="row" style="align-items:center; gap:8px">
+            <span style="flex:1">${titleB}</span>
+            <button id="rename-b" title="${t.edit}">✎</button>
+          </h3>
+          <small>${t.avg(avg(appState.teamB))}</small>
+          <ul style="margin-top:8px">
+            ${appState.teamB.map(p=>`<li>• ${p.name}${p.isGoalkeeper? ' (GK)':''}</li>`).join('')}
+          </ul>
+        </div>
+      </div>
+      ` : ''}
+      ` : ''}
+    </div>
+  `;
+
+  document.getElementById('chk-all').addEventListener('change', (e)=>{
+    if (e.target.checked){
+      appState.selected = new Set(appState.players.map(p=>p.name));
+    } else {
+      appState.selected = new Set();
+    }
+    render(appState);
+  });
+
+  document.getElementById('slider').addEventListener('input', (e)=>{
+    appState.count = Math.max(2, Math.min(22, parseInt(e.target.value||'10',10)));
+    render(appState);
+  });
+
+  document.getElementById('players').querySelectorAll('input[type="checkbox"]').forEach(cb=>{
+    cb.addEventListener('change', ()=>{
+      const name = cb.getAttribute('data-name');
+      if (cb.checked) appState.selected.add(name); else appState.selected.delete(name);
+      render(appState);
+    });
+  });
+
+  document.getElementById('btn-undo').addEventListener('click', ()=>{
+    appState.teamA = [];
+    appState.teamB = [];
+    render(appState);
+  });
+
+  document.getElementById('btn-toggle')?.addEventListener('click', ()=>{
+    appState.showResults = !appState.showResults;
+    render(appState);
+  });
+
+  document.getElementById('btn-share')?.addEventListener('click', async ()=>{
+    const text = formatTeamsText(titleA, titleB, appState.teamA, appState.teamB);
+    try {
+      if (navigator.share){ await navigator.share({ text }); }
+      else {
+        await navigator.clipboard.writeText(text);
+        alert('Copiado al portapapeles');
+      }
+    } catch {}
+  });
+
+  document.getElementById('btn-save')?.addEventListener('click', ()=>{
+    addMatch(titleA, titleB, appState.teamA, appState.teamB);
+    alert('Partido guardado');
+  });
+
+  document.getElementById('btn-generate').addEventListener('click', ()=>{
+    const n = appState.count;
+    const selected = appState.players.filter(p=>appState.selected.has(p.name));
+    if (n < 2) { alert('El mínimo es 2'); return; }
+    if (n > selected.length) { alert('No hay suficientes jugadores seleccionados'); return; }
+    const gks = selected.filter(p=>p.isGoalkeeper);
+    const mustInclude = gks.length >= 2 && n >= 2 ? gks.slice(0,2) : gks.slice(0, Math.min(gks.length, n));
+    const restCount = n - mustInclude.length;
+    const restPool = selected.filter(p=>!p.isGoalkeeper);
+    const chosen = mustInclude.concat(restPool.sort(()=>Math.random()-0.5).slice(0, restCount));
+    const [a,b] = generateBalancedTeams(chosen);
+    appState.teamA = a; appState.teamB = b; appState.showResults = true;
+    render(appState);
+  });
+
+  document.getElementById('btn-create').addEventListener('click', ()=>{
+    openCustomizeDialog();
+  });
+
+  document.getElementById('btn-edit').addEventListener('click', ()=> openEditPlayersDialog());
+  document.getElementById('rename-a')?.addEventListener('click', ()=>{
+    const v = prompt('Nombre del equipo A', titleA) || '';
+    const t2 = v.trim();
+    if (t2){ appState.teamATitle = t2; render(appState); }
+  });
+  document.getElementById('rename-b')?.addEventListener('click', ()=>{
+    const v = prompt('Nombre del equipo B', titleB) || '';
+    const t2 = v.trim();
+    if (t2){ appState.teamBTitle = t2; render(appState); }
+  });
+}
+
+function init(){
+  const players = loadPlayers();
+  const state = {
+    players,
+    selected: new Set(players.map(p=>p.name)),
+    count: Math.min(10, Math.max(2, players.length)),
+    teamA: [],
+    teamB: [],
+    showResults: true
+  };
+  render(state);
+
+  const infoBtn = document.getElementById('action-info');
+  infoBtn?.addEventListener('click', ()=>{
+    alert('Equipos Web - genera equipos balanceados y guarda el historial localmente.');
+  });
+
+  const historyBtn = document.getElementById('action-history');
+  historyBtn?.addEventListener('click', ()=> openHistoryModal());
+
+  const langBtn = document.getElementById('action-language');
+  langBtn?.addEventListener('click', ()=>{
+    window.__lang = window.__lang === 'en' ? 'es' : 'en';
+    render(state);
+  });
+}
+
+init();
+
+const year = document.getElementById('year');
+if (year) year.textContent = new Date().getFullYear();
+
+function openHistoryModal(){
+  const t = i18n();
+  const matches = loadMatches();
+  const overlay = document.createElement('div');
+  overlay.style.position = 'fixed';
+  overlay.style.inset = '0';
+  overlay.style.background = 'rgba(0,0,0,0.5)';
+  overlay.style.display = 'grid';
+  overlay.style.placeItems = 'center';
+  overlay.innerHTML = `
+    <div class="card" style="max-width:720px; width:92vw; max-height:80vh; overflow:auto">
+      <div class="row" style="justify-content:space-between">
+        <h3 style="margin:0">${t.history}</h3>
+        <div class="row">
+          ${matches.length ? `<button id="btn-clear">${t.clearHistory}</button>` : ''}
+          <button id="btn-close">${t.close}</button>
+        </div>
+      </div>
+      ${matches.length ? `
+      <ul style="margin-top:12px">
+        ${matches.map(m=>`
+          <li class="row" style="justify-content:space-between; border-bottom:1px solid var(--divider); padding:8px 0">
+            <div>
+              <div style="font-weight:600">${m.titleA} vs ${m.titleB}</div>
+              <small>${new Date(m.time).toLocaleString()}</small>
+              ${m.result? `<div><small>${t.result}: ${m.result}</small></div>`:''}
+            </div>
+            <div class="row">
+              <button data-action="share" data-id="${m.id}">${t.share}</button>
+              <button data-action="view" data-id="${m.id}">Ver</button>
+              <button class="danger" data-action="delete" data-id="${m.id}">${t.delete}</button>
+            </div>
+          </li>
+        `).join('')}
+      </ul>
+      ` : `<p style="margin-top:12px">(vacío)</p>`}
+    </div>
+  `;
+  document.body.appendChild(overlay);
+  overlay.addEventListener('click', (e)=>{ if (e.target===overlay) document.body.removeChild(overlay); });
+  overlay.querySelector('#btn-close')?.addEventListener('click', ()=> document.body.removeChild(overlay));
+  overlay.querySelector('#btn-clear')?.addEventListener('click', ()=>{ if (confirm('¿Limpiar historial?')){ clearAllMatches(); document.body.removeChild(overlay); openHistoryModal(); }});
+  overlay.querySelectorAll('button[data-action]')?.forEach(btn=>{
+    btn.addEventListener('click', ()=>{
+      const id = Number(btn.getAttribute('data-id'));
+      const action = btn.getAttribute('data-action');
+      if (action==='delete'){
+        if (confirm('¿Eliminar partido?')){ deleteMatch(id); document.body.removeChild(overlay); openHistoryModal(); }
+      } else if (action==='view'){
+        const m = loadMatches().find(x=>x.id===id);
+        if (!m) return;
+        const text = formatSavedMatchText(m);
+        const res = prompt(`${text}\n\n${t.result}:`, m.result||'');
+        if (res!==null){ updateMatchResult(id, res.trim()); document.body.removeChild(overlay); openHistoryModal(); }
+      } else if (action==='share'){
+        const m = loadMatches().find(x=>x.id===id);
+        if (!m) return;
+        const text = formatSavedMatchText(m);
+        (async ()=>{
+          try {
+            if (navigator.share){ await navigator.share({ text }); }
+            else { await navigator.clipboard.writeText(text); alert('Copiado al portapapeles'); }
+          } catch {}
+        })();
       }
     });
   });
 }
 
-function renderShell() {
-  const now = new Date();
-  app.innerHTML = `
-    <div class="card">
-      <h3>Equipos</h3>
-      <p>Demo mínima con API en Express.</p>
-      <p><strong>Hora:</strong> ${now.toLocaleString()}</p>
-      <form id="form" class="row" autocomplete="off">
-        <input id="nombre" name="nombre" placeholder="Nombre del equipo" required />
-        <button type="submit">Agregar</button>
-      </form>
-      <ul id="list"></ul>
-      <div class="row">
-        <button id="ping">Probar /health</button>
-        <pre id="out" class="pre"></pre>
+function openEditPlayersDialog(){
+  const t = i18n();
+  const statePlayers = loadPlayers();
+  let players = statePlayers.slice();
+  const overlay = document.createElement('div');
+  overlay.style.position = 'fixed';
+  overlay.style.inset = '0';
+  overlay.style.background = 'rgba(0,0,0,0.5)';
+  overlay.style.display = 'grid';
+  overlay.style.placeItems = 'center';
+  function renderDialog(){
+    overlay.innerHTML = `
+      <div class="card" style="max-width:860px; width:96vw; max-height:86vh; overflow:auto">
+        <div class="row" style="justify-content:space-between">
+          <h3 style="margin:0">${t.edit}</h3>
+          <div class="row">
+            <button id="save-all">${t.saveMatch}</button>
+            <button id="close">${t.close}</button>
+          </div>
+        </div>
+        <div style="margin-top:8px; max-height:320px; overflow:auto">
+          <ul>
+            ${players.map(p=>`
+              <li style="padding:8px 0; border-bottom:1px solid var(--divider)">
+                <div class="row" style="justify-content:space-between">
+                  <div class="row">
+                    <input type="checkbox" data-gk="${p.name}" ${p.isGoalkeeper?'checked':''} />
+                    <strong>${p.name}</strong>
+                  </div>
+                  <div class="row">
+                    <button data-rename="${p.name}">${t.edit}</button>
+                    <button class="danger" data-delete="${p.name}">${t.delete}</button>
+                  </div>
+                </div>
+                <div class="row" style="margin-top:6px">
+                  <input type="text" data-a="${p.name}" value="${p.attack}" style="width:90px" />
+                  <input type="text" data-d="${p.name}" value="${p.defense}" style="width:90px" />
+                  <input type="text" data-s="${p.name}" value="${p.skill}" style="width:90px" />
+                </div>
+              </li>
+            `).join('')}
+          </ul>
+        </div>
+        <div style="margin-top:12px; border-top:1px solid var(--divider); padding-top:12px">
+          <h4 style="margin:0 0 8px">Añadir jugador</h4>
+          <div class="row">
+            <input type="text" id="new-name" placeholder="Nombre" style="flex:1" />
+            <input type="text" id="new-a" placeholder="Ataque" style="width:100px" />
+            <input type="text" id="new-d" placeholder="Defensa" style="width:100px" />
+            <input type="text" id="new-s" placeholder="Físico" style="width:100px" />
+            <label class="row"><input type="checkbox" id="new-gk" /> GK</label>
+            <button id="add-player">Guardar</button>
+          </div>
+        </div>
+      </div>
+    `;
+  }
+  renderDialog();
+  document.body.appendChild(overlay);
+  overlay.addEventListener('click', (e)=>{ if (e.target===overlay) document.body.removeChild(overlay); });
+  overlay.querySelector('#close')?.addEventListener('click', ()=> document.body.removeChild(overlay));
+  overlay.querySelector('#save-all')?.addEventListener('click', ()=>{
+    const aInputs = overlay.querySelectorAll('input[data-a]');
+    aInputs.forEach(inp=>{
+      const name = inp.getAttribute('data-a');
+      const p = players.find(x=>x.name===name);
+      if (!p) return;
+      const a = parseFloat(inp.value);
+      const d = parseFloat(overlay.querySelector(`input[data-d="${name}"]`).value);
+      const s = parseFloat(overlay.querySelector(`input[data-s="${name}"]`).value);
+      if ([a,d,s].every(v=>!isNaN(v) && v>=1 && v<=10)){
+        p.attack = a; p.defense = d; p.skill = s;
+      }
+      const gkCb = overlay.querySelector(`input[data-gk="${name}"]`);
+      p.isGoalkeeper = gkCb && gkCb.checked ? true : false;
+    });
+    savePlayers(players);
+    document.body.removeChild(overlay);
+    init();
+  });
+  overlay.querySelectorAll('button[data-rename]')?.forEach(btn=>{
+    btn.addEventListener('click', ()=>{
+      const name = btn.getAttribute('data-rename');
+      const p = players.find(x=>x.name===name);
+      if (!p) return;
+      const v = prompt('Nuevo nombre', p.name) || '';
+      const t2 = v.trim();
+      if (!t2) return;
+      if (players.some(x=>x!==p && x.name.toLowerCase()===t2.toLowerCase())) return;
+      p.name = t2;
+      renderDialog();
+    });
+  });
+  overlay.querySelectorAll('button[data-delete]')?.forEach(btn=>{
+    btn.addEventListener('click', ()=>{
+      const name = btn.getAttribute('data-delete');
+      players = players.filter(x=>x.name!==name);
+      renderDialog();
+    });
+  });
+  overlay.querySelector('#add-player')?.addEventListener('click', ()=>{
+    const name = (overlay.querySelector('#new-name').value || '').trim();
+    const a = parseFloat(overlay.querySelector('#new-a').value);
+    const d = parseFloat(overlay.querySelector('#new-d').value);
+    const s = parseFloat(overlay.querySelector('#new-s').value);
+    const gk = !!overlay.querySelector('#new-gk').checked;
+    if (!name || players.some(p=>p.name.toLowerCase()===name.toLowerCase())) return;
+    if ([a,d,s].some(v=>isNaN(v) || v<1 || v>10)) return;
+    players.push({ name, attack:a, defense:d, skill:s, isGoalkeeper:gk });
+    overlay.querySelector('#new-name').value = '';
+    overlay.querySelector('#new-a').value = '';
+    overlay.querySelector('#new-d').value = '';
+    overlay.querySelector('#new-s').value = '';
+    overlay.querySelector('#new-gk').checked = false;
+    renderDialog();
+  });
+}
+
+function openCustomizeDialog(){
+  const t = i18n();
+  const players = loadPlayers();
+  const overlay = document.createElement('div');
+  overlay.style.position = 'fixed';
+  overlay.style.inset = '0';
+  overlay.style.background = 'rgba(0,0,0,0.5)';
+  overlay.style.display = 'grid';
+  overlay.style.placeItems = 'center';
+  const assign = Object.fromEntries(players.map(p=>[p.name,'N']));
+  overlay.innerHTML = `
+    <div class="card" style="max-width:860px; width:96vw; max-height:86vh; overflow:auto">
+      <div class="row" style="justify-content:space-between">
+        <h3 style="margin:0">${t.create}</h3>
+        <div class="row">
+          <button id="apply">${t.create}</button>
+          <button id="close">${t.close}</button>
+        </div>
+      </div>
+      <div style="margin-top:8px; max-height:420px; overflow:auto">
+        <ul>
+          ${players.map(p=>`
+            <li class="row" style="justify-content:space-between; border-bottom:1px solid var(--divider); padding:6px 0">
+              <span>${p.name}${p.isGoalkeeper?' (GK)':''}</span>
+              <span class="row">
+                <label class="row"><input type="radio" name="r-${p.name}" data-n="${p.name}" checked /> N</label>
+                <label class="row"><input type="radio" name="r-${p.name}" data-a2="${p.name}" /> A</label>
+                <label class="row"><input type="radio" name="r-${p.name}" data-b2="${p.name}" /> B</label>
+              </span>
+            </li>
+          `).join('')}
+        </ul>
       </div>
     </div>
   `;
-
-  document.getElementById('ping').addEventListener('click', async () => {
-    const res = await fetch('/health');
-    const data = await res.json();
-    document.getElementById('out').textContent = JSON.stringify(data, null, 2);
-  });
-
-  const form = document.getElementById('form');
-  form.addEventListener('submit', async (ev) => {
-    ev.preventDefault();
-    const input = document.getElementById('nombre');
-    const nombre = input.value.trim();
-    if (!nombre) return;
-    form.querySelector('button[type="submit"]').disabled = true;
-    try {
-      await createEquipo(nombre);
-      input.value = '';
-      await init();
-    } catch (e) {
-      alert(e.message);
-    } finally {
-      form.querySelector('button[type="submit"]').disabled = false;
-    }
+  document.body.appendChild(overlay);
+  overlay.addEventListener('click', (e)=>{ if (e.target===overlay) document.body.removeChild(overlay); });
+  overlay.querySelector('#close')?.addEventListener('click', ()=> document.body.removeChild(overlay));
+  overlay.querySelectorAll('input[data-n]')?.forEach(inp=> inp.addEventListener('change', ()=>{ assign[inp.getAttribute('data-n')] = 'N'; }));
+  overlay.querySelectorAll('input[data-a2]')?.forEach(inp=> inp.addEventListener('change', ()=>{ assign[inp.getAttribute('data-a2')] = 'A'; }));
+  overlay.querySelectorAll('input[data-b2]')?.forEach(inp=> inp.addEventListener('change', ()=>{ assign[inp.getAttribute('data-b2')] = 'B'; }));
+  overlay.querySelector('#apply')?.addEventListener('click', ()=>{
+    const a = players.filter(p=>assign[p.name]==='A');
+    const b = players.filter(p=>assign[p.name]==='B');
+    const state = {
+      players,
+      selected: new Set(players.map(p=>p.name)),
+      count: Math.min(10, Math.max(2, players.length)),
+      teamA: a,
+      teamB: b,
+      showResults: true,
+      teamATitle: i18n().teamA,
+      teamBTitle: i18n().teamB
+    };
+    document.body.removeChild(overlay);
+    render(state);
   });
 }
-
-async function init() {
-  renderShell();
-  const list = document.getElementById('list');
-  list.innerHTML = '<p>Cargando...</p>';
-  try {
-    const items = await fetchEquipos();
-    renderList(items);
-  } catch (e) {
-    list.innerHTML = `<p>Error: ${e.message}</p>`;
-  }
-}
-
-init();
-
-// Update year in footer
-const year = document.getElementById('year');
-if (year) year.textContent = new Date().getFullYear();
