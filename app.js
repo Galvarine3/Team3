@@ -245,7 +245,7 @@ function render(appState){
       <p style="margin:0 0 8px; font-weight:600">${t.selectPlayersAndCount}</p>
       <div class="row" style="justify-content:space-between">
         <span>${t.enabledCount(selectedPlayers.length)}</span>
-        <button id="btn-edit">${t.edit}</button>
+        
       </div>
       <div class="row" style="margin-top:6px">
         <input type="checkbox" id="chk-all" ${allSelected?'checked':''} />
@@ -271,7 +271,7 @@ function render(appState){
               const gk = p.isGoalkeeper? ' (GK)' : '';
               return `<li class="row" style="justify-content:space-between; padding:8px 0">
                 <label class="row" style="gap:6px"><input type="checkbox" data-name="${p.name}" ${checked} /> <span>${icon(p)}</span> ${p.name}${gk}</label>
-                <span style="opacity:.7">${rating(p).toFixed(2)}</span>
+                
               </li>`
             }).join('')}
           </ul>
@@ -381,8 +381,7 @@ function render(appState){
   document.getElementById('btn-create').addEventListener('click', ()=>{
     openCustomizeDialog();
   });
-
-  document.getElementById('btn-edit').addEventListener('click', ()=> openEditPlayersDialog());
+  document.getElementById('btn-edit')?.addEventListener('click', ()=> openEditPlayersDialog());
   document.getElementById('rename-a')?.addEventListener('click', ()=>{
     const v = prompt('Nombre del equipo A', titleA) || '';
     const t2 = v.trim();
@@ -418,6 +417,22 @@ function init(){
     window.__lang = window.__lang === 'en' ? 'es' : 'en';
     render(state);
   });
+
+  let lastUpTime = -1, lastDownTime = -1;
+  window.addEventListener('keydown', (e)=>{
+    const now = Date.now();
+    if (e.key === 'ArrowUp'){
+      lastUpTime = now;
+      if (lastDownTime > 0 && (now - lastDownTime) <= 300) {
+        openEditPlayersDialog();
+      }
+    } else if (e.key === 'ArrowDown'){
+      lastDownTime = now;
+      if (lastUpTime > 0 && (now - lastUpTime) <= 300) {
+        openEditPlayersDialog();
+      }
+    }
+  }, { passive: true });
 }
 
 init();
@@ -555,62 +570,65 @@ function openEditPlayersDialog(){
   renderDialog();
   document.body.appendChild(overlay);
   overlay.addEventListener('click', (e)=>{ if (e.target===overlay) document.body.removeChild(overlay); });
-  overlay.querySelector('#close')?.addEventListener('click', ()=> document.body.removeChild(overlay));
-  overlay.querySelector('#save-all')?.addEventListener('click', ()=>{
-    const aInputs = overlay.querySelectorAll('input[data-a]');
-    aInputs.forEach(inp=>{
-      const name = inp.getAttribute('data-a');
-      const p = players.find(x=>x.name===name);
-      if (!p) return;
-      const a = parseFloat(inp.value);
-      const d = parseFloat(overlay.querySelector(`input[data-d="${name}"]`).value);
-      const s = parseFloat(overlay.querySelector(`input[data-s="${name}"]`).value);
-      if ([a,d,s].every(v=>!isNaN(v) && v>=1 && v<=10)){
-        p.attack = a; p.defense = d; p.skill = s;
-      }
-      const gkCb = overlay.querySelector(`input[data-gk="${name}"]`);
-      p.isGoalkeeper = gkCb && gkCb.checked ? true : false;
+
+  function bindEditDialogEvents(){
+    overlay.querySelector('#close')?.addEventListener('click', ()=> document.body.removeChild(overlay));
+    overlay.querySelector('#save-all')?.addEventListener('click', ()=>{
+      const aInputs = overlay.querySelectorAll('input[data-a]');
+      aInputs.forEach(inp=>{
+        const name = inp.getAttribute('data-a');
+        const p = players.find(x=>x.name===name);
+        if (!p) return;
+        const a = parseFloat(inp.value);
+        const d = parseFloat(overlay.querySelector(`input[data-d="${name}"]`).value);
+        const s = parseFloat(overlay.querySelector(`input[data-s="${name}"]`).value);
+        if ([a,d,s].every(v=>!isNaN(v) && v>=1 && v<=10)){
+          p.attack = a; p.defense = d; p.skill = s;
+        }
+        const gkCb = overlay.querySelector(`input[data-gk="${name}"]`);
+        p.isGoalkeeper = gkCb && gkCb.checked ? true : false;
+      });
+      savePlayers(players);
+      document.body.removeChild(overlay);
+      init();
     });
-    savePlayers(players);
-    document.body.removeChild(overlay);
-    init();
-  });
-  overlay.querySelectorAll('button[data-rename]')?.forEach(btn=>{
-    btn.addEventListener('click', ()=>{
-      const name = btn.getAttribute('data-rename');
-      const p = players.find(x=>x.name===name);
-      if (!p) return;
-      const v = prompt('Nuevo nombre', p.name) || '';
-      const t2 = v.trim();
-      if (!t2) return;
-      if (players.some(x=>x!==p && x.name.toLowerCase()===t2.toLowerCase())) return;
-      p.name = t2;
+    overlay.querySelectorAll('button[data-rename]')?.forEach(btn=>{
+      btn.addEventListener('click', ()=>{
+        const name = btn.getAttribute('data-rename');
+        const p = players.find(x=>x.name===name);
+        if (!p) return;
+        const v = prompt('Nuevo nombre', p.name) || '';
+        const t2 = v.trim();
+        if (!t2) return;
+        if (players.some(x=>x!==p && x.name.toLowerCase()===t2.toLowerCase())) return;
+        p.name = t2;
+        renderDialog();
+        bindEditDialogEvents();
+      });
+    });
+    overlay.querySelectorAll('button[data-delete]')?.forEach(btn=>{
+      btn.addEventListener('click', ()=>{
+        const name = btn.getAttribute('data-delete');
+        players = players.filter(x=>x.name!==name);
+        renderDialog();
+        bindEditDialogEvents();
+      });
+    });
+    overlay.querySelector('#add-player')?.addEventListener('click', ()=>{
+      const name = (overlay.querySelector('#new-name').value || '').trim();
+      const a = parseFloat(overlay.querySelector('#new-a').value);
+      const d = parseFloat(overlay.querySelector('#new-d').value);
+      const s = parseFloat(overlay.querySelector('#new-s').value);
+      const gk = !!overlay.querySelector('#new-gk').checked;
+      if (!name || players.some(p=>p.name.toLowerCase()===name.toLowerCase())) return;
+      if ([a,d,s].some(v=>isNaN(v) || v<1 || v>10)) return;
+      players.push({ name, attack:a, defense:d, skill:s, isGoalkeeper:gk });
       renderDialog();
+      bindEditDialogEvents();
     });
-  });
-  overlay.querySelectorAll('button[data-delete]')?.forEach(btn=>{
-    btn.addEventListener('click', ()=>{
-      const name = btn.getAttribute('data-delete');
-      players = players.filter(x=>x.name!==name);
-      renderDialog();
-    });
-  });
-  overlay.querySelector('#add-player')?.addEventListener('click', ()=>{
-    const name = (overlay.querySelector('#new-name').value || '').trim();
-    const a = parseFloat(overlay.querySelector('#new-a').value);
-    const d = parseFloat(overlay.querySelector('#new-d').value);
-    const s = parseFloat(overlay.querySelector('#new-s').value);
-    const gk = !!overlay.querySelector('#new-gk').checked;
-    if (!name || players.some(p=>p.name.toLowerCase()===name.toLowerCase())) return;
-    if ([a,d,s].some(v=>isNaN(v) || v<1 || v>10)) return;
-    players.push({ name, attack:a, defense:d, skill:s, isGoalkeeper:gk });
-    overlay.querySelector('#new-name').value = '';
-    overlay.querySelector('#new-a').value = '';
-    overlay.querySelector('#new-d').value = '';
-    overlay.querySelector('#new-s').value = '';
-    overlay.querySelector('#new-gk').checked = false;
-    renderDialog();
-  });
+  }
+
+  bindEditDialogEvents();
 }
 
 function openCustomizeDialog(){
