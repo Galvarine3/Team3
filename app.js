@@ -35,6 +35,38 @@ const initialPlayers = [
   { name: 'Navaloco', attack: 6.7, defense: 6.4, skill: 6.3, isGoalkeeper: false }
 ];
 
+async function openInfoModal(){
+  const t = i18n();
+  let data = null;
+  try {
+    const res = await fetch('/info.json', { cache: 'no-cache' });
+    if (res.ok) data = await res.json();
+  } catch {}
+  const lang = (window.__lang === 'en' ? 'en' : 'es');
+  const title = data?.[lang]?.title || (lang==='en' ? 'Information' : 'Información');
+  const body = data?.[lang]?.body || (lang==='en'
+    ? 'Equipos Web helps you create balanced teams and save match history locally in your browser.'
+    : 'Equipos Web te ayuda a crear equipos balanceados y guardar el historial de partidos localmente en tu navegador.');
+
+  const overlay = document.createElement('div');
+  overlay.style.position = 'fixed';
+  overlay.style.inset = '0';
+  overlay.style.background = 'rgba(0,0,0,0.5)';
+  overlay.style.display = 'grid';
+  overlay.style.placeItems = 'center';
+  overlay.innerHTML = `
+    <div class="card" style="max-width:720px; width:92vw; max-height:80vh; overflow:auto">
+      <div class="row" style="justify-content:space-between">
+        <h3 style="margin:0">${title}</h3>
+        <button id="btn-close">${t.close}</button>
+      </div>
+      <div style="margin-top:8px; white-space:pre-wrap">${body}</div>
+    </div>
+  `;
+  document.body.appendChild(overlay);
+  overlay.addEventListener('click', (e)=>{ if (e.target===overlay) document.body.removeChild(overlay); });
+  overlay.querySelector('#btn-close')?.addEventListener('click', ()=> document.body.removeChild(overlay));
+}
 function rating(p){ return (p.attack + p.defense + p.skill) / 3.0; }
 
 function loadPlayers(){
@@ -206,6 +238,7 @@ function render(appState){
   const allSelected = appState.players.length>0 && appState.selected.size === appState.players.length;
   const titleA = appState.teamATitle || t.teamA;
   const titleB = appState.teamBTitle || t.teamB;
+  const icon = (p)=> p.isGoalkeeper ? '🧤' : '👕';
 
   app.innerHTML = `
     <div class="card">
@@ -237,7 +270,7 @@ function render(appState){
               const checked = appState.selected.has(p.name)?'checked':'';
               const gk = p.isGoalkeeper? ' (GK)' : '';
               return `<li class="row" style="justify-content:space-between; padding:8px 0">
-                <label class="row" style="gap:6px"><input type="checkbox" data-name="${p.name}" ${checked} /> ${p.name}${gk}</label>
+                <label class="row" style="gap:6px"><input type="checkbox" data-name="${p.name}" ${checked} /> <span>${icon(p)}</span> ${p.name}${gk}</label>
                 <span style="opacity:.7">${rating(p).toFixed(2)}</span>
               </li>`
             }).join('')}
@@ -262,7 +295,7 @@ function render(appState){
           </h3>
           <small>${t.avg(avg(appState.teamA))}</small>
           <ul style="margin-top:8px">
-            ${appState.teamA.map(p=>`<li>• ${p.name}${p.isGoalkeeper? ' (GK)':''}</li>`).join('')}
+            ${appState.teamA.map(p=>`<li>${icon(p)} ${p.name}${p.isGoalkeeper? ' (GK)':''}</li>`).join('')}
           </ul>
         </div>
         <div style="flex:1" class="card">
@@ -272,7 +305,7 @@ function render(appState){
           </h3>
           <small>${t.avg(avg(appState.teamB))}</small>
           <ul style="margin-top:8px">
-            ${appState.teamB.map(p=>`<li>• ${p.name}${p.isGoalkeeper? ' (GK)':''}</li>`).join('')}
+            ${appState.teamB.map(p=>`<li>${icon(p)} ${p.name}${p.isGoalkeeper? ' (GK)':''}</li>`).join('')}
           </ul>
         </div>
       </div>
@@ -375,9 +408,7 @@ function init(){
   render(state);
 
   const infoBtn = document.getElementById('action-info');
-  infoBtn?.addEventListener('click', ()=>{
-    alert('Equipos Web - genera equipos balanceados y guarda el historial localmente.');
-  });
+  infoBtn?.addEventListener('click', ()=> openInfoModal());
 
   const historyBtn = document.getElementById('action-history');
   historyBtn?.addEventListener('click', ()=> openHistoryModal());
@@ -489,6 +520,7 @@ function openEditPlayersDialog(){
               <li style="padding:8px 0; border-bottom:1px solid var(--divider)">
                 <div class="row" style="justify-content:space-between">
                   <div class="row">
+                    <span>${p.isGoalkeeper?'🧤':'👕'}</span>
                     <input type="checkbox" data-gk="${p.name}" ${p.isGoalkeeper?'checked':''} />
                     <strong>${p.name}</strong>
                   </div>
@@ -604,7 +636,7 @@ function openCustomizeDialog(){
         <ul>
           ${players.map(p=>`
             <li class="row" style="justify-content:space-between; border-bottom:1px solid var(--divider); padding:6px 0">
-              <span>${p.name}${p.isGoalkeeper?' (GK)':''}</span>
+              <span>${p.isGoalkeeper?'🧤':'👕'} ${p.name}${p.isGoalkeeper?' (GK)':''}</span>
               <span class="row">
                 <label class="row"><input type="radio" name="r-${p.name}" data-n="${p.name}" checked /> N</label>
                 <label class="row"><input type="radio" name="r-${p.name}" data-a2="${p.name}" /> A</label>
