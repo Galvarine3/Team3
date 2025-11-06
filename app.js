@@ -4,35 +4,37 @@ const PREFS_KEY = 'equipos_web_players_v1';
 const MATCHES_KEY = 'equipos_web_matches_v1';
 
 const initialPlayers = [
-  { name: 'Rulo', attack: 5.0, defense: 8.0, skill: 8.0, isGoalkeeper: false },
-  { name: 'Ariel',  attack: 7.9, defense: 8.4, skill: 8.4, isGoalkeeper: false },
-  { name: 'Diego',  attack: 7.3, defense: 7.4, skill: 7.3, isGoalkeeper: false },
-  { name: 'Jaime',  attack: 7.2, defense: 7.5, skill: 7.6, isGoalkeeper: false },
-  { name: 'Pablo V',attack: 8.0, defense: 8.0, skill: 8.0, isGoalkeeper: false },
-  { name: 'Carlitos',attack: 7.0, defense: 7.5, skill: 7.5, isGoalkeeper: false },
-  { name: 'Seba',   attack: 7.5, defense: 6.8, skill: 7.6, isGoalkeeper: false },
-  { name: 'Feña',   attack: 6.5, defense: 7.0, skill: 6.7, isGoalkeeper: false },
-  { name: 'Gustavo (P)', attack: 7.3, defense: 7.3, skill: 7.2, isGoalkeeper: false },
-  { name: 'Tío Seba', attack: 6.2, defense: 7.0, skill: 6.1, isGoalkeeper: false },
-  { name: 'Manuel', attack: 7.3, defense: 7.6, skill: 7.6, isGoalkeeper: false },
-  { name: 'Pablo P', attack: 6.8, defense: 6.6, skill: 7.2, isGoalkeeper: false },
-  { name: 'Kevin',  attack: 7.7, defense: 7.1, skill: 7.0, isGoalkeeper: false },
-  { name: 'David',  attack: 7.2, defense: 6.9, skill: 7.2, isGoalkeeper: false },
-  { name: 'Benja',  attack: 7.3, defense: 7.5, skill: 7.5, isGoalkeeper: false },
-  { name: 'Juan',   attack: 7.1, defense: 7.4, skill: 7.2, isGoalkeeper: false },
-  { name: 'Marín',  attack: 7.2, defense: 7.5, skill: 7.7, isGoalkeeper: false },
-  { name: 'Felipe Ep', attack: 7.2, defense: 7.0, skill: 7.5, isGoalkeeper: false },
-  { name: 'Chiqui', attack: 8.8, defense: 7.8, skill: 8.2, isGoalkeeper: false },
-  { name: 'Bubu',   attack: 7.6, defense: 7.2, skill: 7.3, isGoalkeeper: false },
-  { name: 'Vicho',  attack: 8.8, defense: 8.4, skill: 8.8, isGoalkeeper: false },
-  { name: 'Emilio', attack: 8.8, defense: 7.6, skill: 8.5, isGoalkeeper: false },
-  { name: 'Jesús',  attack: 7.3, defense: 7.3, skill: 7.3, isGoalkeeper: false },
-  { name: 'Shuvert',attack: 7.3, defense: 7.5, skill: 7.7, isGoalkeeper: false },
-  { name: 'Gastón', attack: 7.8, defense: 7.5, skill: 8.0, isGoalkeeper: false },
-  { name: 'Richard',attack: 7.5, defense: 7.5, skill: 7.8, isGoalkeeper: false },
-  { name: 'Víctor', attack: 7.4, defense: 7.4, skill: 7.4, isGoalkeeper: false },
-  { name: 'Gustavo Riquelme', attack: 7.1, defense: 7.1, skill: 7.1, isGoalkeeper: false },
-  { name: 'Navaloco', attack: 6.7, defense: 6.4, skill: 6.3, isGoalkeeper: false }
+  { name: 'Rulo', attack: 5.0, defense: 8.0, physical: 8.0, isGoalkeeper: false },
+  { name: 'Ariel',  attack: 7.9, defense: 8.4, physical: 8.4, isGoalkeeper: false },
+  { name: 'Diego',  attack: 7.3, defense: 7.4, physical: 7.3, isGoalkeeper: false },
+  { name: 'Jaime',  attack: 7.2, defense: 7.5, physical: 7.6, isGoalkeeper: false },
+  { name: 'Pablo V',attack: 8.0, defense: 8.0, physical: 8.0, isGoalkeeper: false },
+  { name: 'Carlitos',attack: 7.0, defense: 7.5, physical: 7.5, isGoalkeeper: false },
+  { name: 'Seba',   attack: 7.5, defense: 6.8, physical: 7.6, isGoalkeeper: false },
+  { name: 'Feña',   attack: 6.5, defense: 7.0, physical: 6.7, isGoalkeeper: false },
+  { name: 'Gustavo (P)', attack: 7.3, defense: 7.3, physical: 7.2, isGoalkeeper: false },
+  { name: 'Tío Seba', attack: 6.2, defense: 7.0, physical: 6.1, isGoalkeeper: false },
+  { name: 'Manuel', attack: 7.3, defense: 7.6, physical: 7.6, isGoalkeeper: false },
+  { name: 'Pablo P', attack: 6.8, defense: 6.6, physical: 7.2, isGoalkeeper: false },
+  { name: 'Kevin',  attack: 7.7, defense: 7.1, physical: 7.0, isGoalkeeper: false },
+  { name: 'David',  attack: 7.2, defense: 6.9, physical: 7.2, isGoalkeeper: false },
+  { name: 'Benja',  attack: 7.3, defense: 7.5, physical: 7.5, isGoalkeeper: false },
+  { name: 'Juan',   attack: 7.1, defense: 7.4, physical: 7.2, isGoalkeeper: false },
+  { name: 'Marín',  attack: 7.2, defense: 7.5, physical: 7.7, isGoalkeeper: false },
+  { name: 'Felipe Ep', attack: 7.2, defense: 7.0, physical: 7.5, isGoalkeeper: false },
+  { name: 'Chiqui', attack: 8.8, defense: 7.8, physical: 8.2, isGoalkeeper: false },
+  { name: 'Bubu',   attack: 7.6, defense: 7.2, physical: 7.3, isGoalkeeper: false },
+  { name: 'Vicho',  attack: 8.8, defense: 8.4, physical: 8.8, isGoalkeeper: false },
+  { name: 'Emilio', attack: 8.8, defense: 7.6, physical: 8.5, isGoalkeeper: false },
+  { name: 'Jesús',  attack: 7.3, defense: 7.3, physical: 7.3, isGoalkeeper: false },
+  { name: 'Shuvert',attack: 7.3, defense: 7.5, physical: 7.7, isGoalkeeper: false },
+  { name: 'Gastón', attack: 7.8, defense: 7.5, physical: 8.0, isGoalkeeper: false },
+  { name: 'Richard',attack: 7.5, defense: 7.5, physical: 7.8, isGoalkeeper: false },
+  { name: 'Víctor', attack: 7.4, defense: 7.4, physical: 7.4, isGoalkeeper: false },
+  { name: 'Gustavo Riquelme', attack: 7.1, defense: 7.1, physical: 7.1, isGoalkeeper: false },
+  { name: 'Navaloco', attack: 6.7, defense: 6.4, physical: 6.3, isGoalkeeper: false },
+  { name: 'Luciano', attack: 7.3, defense: 7.1, physical: 7.0, isGoalkeeper: false },
+  { name: 'Jorge', attack: 8.0, defense: 7.8, physical: 8.0, isGoalkeeper: false },
 ];
 
 async function openInfoModal(){
@@ -67,17 +69,24 @@ async function openInfoModal(){
   overlay.addEventListener('click', (e)=>{ if (e.target===overlay) document.body.removeChild(overlay); });
   overlay.querySelector('#btn-close')?.addEventListener('click', ()=> document.body.removeChild(overlay));
 }
-function rating(p){ return (p.attack + p.defense + p.skill) / 3.0; }
+function rating(p){ return (p.attack + p.defense + p.physical) / 3.0; }
 
 function loadPlayers(){
   try {
     const raw = localStorage.getItem(PREFS_KEY);
-    if (!raw) return initialPlayers.slice();
-    const arr = JSON.parse(raw);
-    if (!Array.isArray(arr)) return initialPlayers.slice();
-    return arr;
+    const fallback = initialPlayers.slice();
+    const arr = raw ? JSON.parse(raw) : fallback;
+    const list = Array.isArray(arr) ? arr : fallback;
+    // compatibility: map legacy 'skill' to new 'physical'
+    return list.map(p=>{
+      const physical = (typeof p.physical === 'number')
+        ? p.physical
+        : (typeof p.skill === 'number' ? p.skill : 0);
+      return { ...p, physical };
+    });
   } catch {
-    return initialPlayers.slice();
+    // fallback with compatibility mapping
+    return initialPlayers.slice().map(p=>({ ...p, physical: (typeof p.physical==='number'?p.physical:(typeof p.skill==='number'?p.skill:0)) }));
   }
 }
 
@@ -149,36 +158,36 @@ function generateBalancedTeams(chosen){
   function objectiveAfter(addToA, p){
     const naA = addToA ? aA + p.attack : aA;
     const ndA = addToA ? dA + p.defense : dA;
-    const nsA = addToA ? sA + p.skill : sA;
+    const nsA = addToA ? sA + p.physical : sA;
     const naB = addToA ? aB : aB + p.attack;
     const ndB = addToA ? dB : dB + p.defense;
-    const nsB = addToA ? sB : sB + p.skill;
+    const nsB = addToA ? sB : sB + p.physical;
     const da = naA - naB, dd = ndA - ndB, ds = nsA - nsB;
     return da*da + dd*dd + ds*ds;
   }
   if (goalkeepers.length >= 2){
     const gkA = goalkeepers[0], gkB = goalkeepers[1];
-    teamA.push(gkA); aA+=gkA.attack; dA+=gkA.defense; sA+=gkA.skill;
-    teamB.push(gkB); aB+=gkB.attack; dB+=gkB.defense; sB+=gkB.skill;
+    teamA.push(gkA); aA+=gkA.attack; dA+=gkA.defense; sA+=gkA.physical;
+    teamB.push(gkB); aB+=gkB.attack; dB+=gkB.defense; sB+=gkB.physical;
   }
   const pool = (goalkeepers.length>=2? rest : goalkeepers.concat(rest));
   for (const p of pool){
     const toA = objectiveAfter(true, p);
     const toB = objectiveAfter(false, p);
-    if (toA < toB){ teamA.push(p); aA+=p.attack; dA+=p.defense; sA+=p.skill; }
-    else if (toB < toA){ teamB.push(p); aB+=p.attack; dB+=p.defense; sB+=p.skill; }
+    if (toA < toB){ teamA.push(p); aA+=p.attack; dA+=p.defense; sA+=p.physical; }
+    else if (toB < toA){ teamB.push(p); aB+=p.attack; dB+=p.defense; sB+=p.physical; }
     else { // tie: random side to break determinism
-      if (Math.random() < 0.5){ teamA.push(p); aA+=p.attack; dA+=p.defense; sA+=p.skill; }
-      else { teamB.push(p); aB+=p.attack; dB+=p.defense; sB+=p.skill; }
+      if (Math.random() < 0.5){ teamA.push(p); aA+=p.attack; dA+=p.defense; sA+=p.physical; }
+      else { teamB.push(p); aB+=p.attack; dB+=p.defense; sB+=p.physical; }
     }
   }
   while (Math.abs(teamA.length - teamB.length) > 1){
     if (teamA.length > teamB.length){
       const moved = teamA.pop();
-      teamB.push(moved); aA-=moved.attack; dA-=moved.defense; sA-=moved.skill; aB+=moved.attack; dB+=moved.defense; sB+=moved.skill;
+      teamB.push(moved); aA-=moved.attack; dA-=moved.defense; sA-=moved.physical; aB+=moved.attack; dB+=moved.defense; sB+=moved.physical;
     } else {
       const moved = teamB.pop();
-      teamA.push(moved); aB-=moved.attack; dB-=moved.defense; sB-=moved.skill; aA+=moved.attack; dA+=moved.defense; sA+=moved.skill;
+      teamA.push(moved); aB-=moved.attack; dB-=moved.defense; sB-=moved.physical; aA+=moved.attack; dA+=moved.defense; sA+=moved.physical;
     }
   }
   return [teamA, teamB];
@@ -189,7 +198,7 @@ function teamCost(aA,dA,sA,aB,dB,sB){
 }
 
 function evaluateTeams(a,b){
-  const sums = (t)=>t.reduce((acc,p)=>{acc[0]+=p.attack; acc[1]+=p.defense; acc[2]+=p.skill; return acc;}, [0,0,0]);
+  const sums = (t)=>t.reduce((acc,p)=>{acc[0]+=p.attack; acc[1]+=p.defense; acc[2]+=p.physical; return acc;}, [0,0,0]);
   const [aA,dA,sA]=sums(a); const [aB,dB,sB]=sums(b);
   return teamCost(aA,dA,sA,aB,dB,sB);
 }
@@ -271,7 +280,7 @@ function i18n(){
     showResults: 'Mostrar resultados',
     share: 'Compartir',
     saveMatch: 'Guardar partido',
-    saveChanges: 'Guardar cambios',
+    saveChanges: 'Aplicar Cambios',
     history: 'Historial',
     close: 'Cerrar',
     clearHistory: 'Limpiar historial',
@@ -279,8 +288,8 @@ function i18n(){
     result: 'Resultado'
   };
   // add labels for scoring fields
-  en.attack = 'Attack'; en.defense = 'Defense'; en.skill = 'Skill';
-  es.attack = 'Ataque'; es.defense = 'Defensa'; es.skill = 'Físico';
+  en.attack = 'Attack'; en.defense = 'Defense'; en.physical = 'Physical';
+  es.attack = 'Ataque'; es.defense = 'Defensa'; es.physical = 'Físico';
   return window.__lang === 'en' ? en : es;
 }
 
@@ -662,8 +671,8 @@ function openEditPlayersDialog(){
                   <label class="row" style="gap:4px"><small>${t.defense}</small>
                     <input type="text" data-d="${p.name}" value="${p.defense}" style="width:90px" />
                   </label>
-                  <label class="row" style="gap:4px"><small>${t.skill}</small>
-                    <input type="text" data-s="${p.name}" value="${p.skill}" style="width:90px" />
+                  <label class="row" style="gap:4px"><small>${t.physical}</small>
+                    <input type="text" data-p="${p.name}" value="${p.physical}" style="width:90px" />
                   </label>
                 </div>
               </li>
@@ -676,9 +685,9 @@ function openEditPlayersDialog(){
             <input type="text" id="new-name" placeholder="Nombre" style="flex:1" />
             <input type="text" id="new-a" placeholder="${t.attack}" style="width:100px" />
             <input type="text" id="new-d" placeholder="${t.defense}" style="width:100px" />
-            <input type="text" id="new-s" placeholder="${t.skill}" style="width:100px" />
+            <input type="text" id="new-p" placeholder="${t.physical}" style="width:100px" />
             <label class="row"><input type="checkbox" id="new-gk" /> GK</label>
-            <button id="add-player">Guardar</button>
+            <button id="add-player">Agregar</button>
           </div>
         </div>
       </div>
@@ -698,9 +707,9 @@ function openEditPlayersDialog(){
         if (!p) return;
         const a = parseFloat(inp.value);
         const d = parseFloat(overlay.querySelector(`input[data-d="${name}"]`).value);
-        const s = parseFloat(overlay.querySelector(`input[data-s="${name}"]`).value);
-        if ([a,d,s].every(v=>!isNaN(v) && v>=1 && v<=10)){
-          p.attack = a; p.defense = d; p.skill = s;
+        const phys = parseFloat(overlay.querySelector(`input[data-p="${name}"]`).value);
+        if ([a,d,phys].every(v=>!isNaN(v) && v>=1 && v<=10)){
+          p.attack = a; p.defense = d; p.physical = phys;
         }
         const gkCb = overlay.querySelector(`input[data-gk="${name}"]`);
         p.isGoalkeeper = gkCb && gkCb.checked ? true : false;
@@ -735,11 +744,11 @@ function openEditPlayersDialog(){
       const name = (overlay.querySelector('#new-name').value || '').trim();
       const a = parseFloat(overlay.querySelector('#new-a').value);
       const d = parseFloat(overlay.querySelector('#new-d').value);
-      const s = parseFloat(overlay.querySelector('#new-s').value);
+      const phys = parseFloat(overlay.querySelector('#new-p').value);
       const gk = !!overlay.querySelector('#new-gk').checked;
       if (!name || players.some(p=>p.name.toLowerCase()===name.toLowerCase())) return;
-      if ([a,d,s].some(v=>isNaN(v) || v<1 || v>10)) return;
-      players.push({ name, attack:a, defense:d, skill:s, isGoalkeeper:gk });
+      if ([a,d,phys].some(v=>isNaN(v) || v<1 || v>10)) return;
+      players.push({ name, attack:a, defense:d, physical:phys, isGoalkeeper:gk });
       renderDialog();
       bindEditDialogEvents();
     });
