@@ -4,7 +4,7 @@ const PREFS_KEY = 'equipos_web_players_v1';
 const MATCHES_KEY = 'equipos_web_matches_v1';
 
 const initialPlayers = [
-  { name: 'Rulo', attack: 5.0, defense: 8.0, physical: 8.0, isGoalkeeper: false },
+  { name: 'Rulo', attack: 5.0, defense: 8.0, physical: 8.0, isGoalkeeper: true },
   { name: 'Ariel',  attack: 7.9, defense: 8.4, physical: 8.4, isGoalkeeper: false },
   { name: 'Diego',  attack: 7.3, defense: 7.4, physical: 7.3, isGoalkeeper: false },
   { name: 'Jaime',  attack: 7.2, defense: 7.5, physical: 7.6, isGoalkeeper: false },
@@ -69,7 +69,8 @@ async function openInfoModal(){
   overlay.addEventListener('click', (e)=>{ if (e.target===overlay) document.body.removeChild(overlay); });
   overlay.querySelector('#btn-close')?.addEventListener('click', ()=> document.body.removeChild(overlay));
 }
-function rating(p){ return (p.attack + p.defense + p.physical) / 3.0; }
+const weights = { attack: 0.35, defense: 0.35, physical: 0.30 };
+function rating(p){ return p.attack*weights.attack + p.defense*weights.defense + p.physical*weights.physical; }
 
 function loadPlayers(){
   try {
@@ -154,53 +155,55 @@ function generateBalancedTeams(chosen){
   const goalkeepers = chosen.filter(p=>p.isGoalkeeper).slice().sort(()=>Math.random()-0.5);
   const rest = chosen.filter(p=>!p.isGoalkeeper).slice().sort((a,b)=> (rating(b)-rating(a)) || (Math.random()-0.5));
   const teamA = [], teamB = [];
-  let aA=0, dA=0, sA=0, aB=0, dB=0, sB=0;
+  let aA=0, dA=0, sA=0, rA=0, aB=0, dB=0, sB=0, rB=0;
   function objectiveAfter(addToA, p){
     const naA = addToA ? aA + p.attack : aA;
     const ndA = addToA ? dA + p.defense : dA;
     const nsA = addToA ? sA + p.physical : sA;
+    const nrA = addToA ? rA + rating(p) : rA;
     const naB = addToA ? aB : aB + p.attack;
     const ndB = addToA ? dB : dB + p.defense;
     const nsB = addToA ? sB : sB + p.physical;
-    const da = naA - naB, dd = ndA - ndB, ds = nsA - nsB;
-    return da*da + dd*dd + ds*ds;
+    const nrB = addToA ? rB : rB + rating(p);
+    const da = naA - naB, dd = ndA - ndB, ds = nsA - nsB, dr = nrA - nrB;
+    return da*da + dd*dd + ds*ds + dr*dr;
   }
   if (goalkeepers.length >= 2){
     const gkA = goalkeepers[0], gkB = goalkeepers[1];
-    teamA.push(gkA); aA+=gkA.attack; dA+=gkA.defense; sA+=gkA.physical;
-    teamB.push(gkB); aB+=gkB.attack; dB+=gkB.defense; sB+=gkB.physical;
+    teamA.push(gkA); aA+=gkA.attack; dA+=gkA.defense; sA+=gkA.physical; rA+=rating(gkA);
+    teamB.push(gkB); aB+=gkB.attack; dB+=gkB.defense; sB+=gkB.physical; rB+=rating(gkB);
   }
   const pool = (goalkeepers.length>=2? rest : goalkeepers.concat(rest));
   for (const p of pool){
     const toA = objectiveAfter(true, p);
     const toB = objectiveAfter(false, p);
-    if (toA < toB){ teamA.push(p); aA+=p.attack; dA+=p.defense; sA+=p.physical; }
-    else if (toB < toA){ teamB.push(p); aB+=p.attack; dB+=p.defense; sB+=p.physical; }
+    if (toA < toB){ teamA.push(p); aA+=p.attack; dA+=p.defense; sA+=p.physical; rA+=rating(p); }
+    else if (toB < toA){ teamB.push(p); aB+=p.attack; dB+=p.defense; sB+=p.physical; rB+=rating(p); }
     else { // tie: random side to break determinism
-      if (Math.random() < 0.5){ teamA.push(p); aA+=p.attack; dA+=p.defense; sA+=p.physical; }
-      else { teamB.push(p); aB+=p.attack; dB+=p.defense; sB+=p.physical; }
+      if (Math.random() < 0.5){ teamA.push(p); aA+=p.attack; dA+=p.defense; sA+=p.physical; rA+=rating(p); }
+      else { teamB.push(p); aB+=p.attack; dB+=p.defense; sB+=p.physical; rB+=rating(p); }
     }
   }
   while (Math.abs(teamA.length - teamB.length) > 1){
     if (teamA.length > teamB.length){
       const moved = teamA.pop();
-      teamB.push(moved); aA-=moved.attack; dA-=moved.defense; sA-=moved.physical; aB+=moved.attack; dB+=moved.defense; sB+=moved.physical;
+      teamB.push(moved); aA-=moved.attack; dA-=moved.defense; sA-=moved.physical; rA-=rating(moved); aB+=moved.attack; dB+=moved.defense; sB+=moved.physical; rB+=rating(moved);
     } else {
       const moved = teamB.pop();
-      teamA.push(moved); aB-=moved.attack; dB-=moved.defense; sB-=moved.physical; aA+=moved.attack; dA+=moved.defense; sA+=moved.physical;
+      teamA.push(moved); aB-=moved.attack; dB-=moved.defense; sB-=moved.physical; rB-=rating(moved); aA+=moved.attack; dA+=moved.defense; sA+=moved.physical; rA+=rating(moved);
     }
   }
   return [teamA, teamB];
 }
 
-function teamCost(aA,dA,sA,aB,dB,sB){
-  const da=aA-aB, dd=dA-dB, ds=sA-sB; return da*da+dd*dd+ds*ds;
+function teamCost(aA,dA,sA,rA,aB,dB,sB,rB){
+  const da=aA-aB, dd=dA-dB, ds=sA-sB, dr=rA-rB; return da*da+dd*dd+ds*ds+dr*dr;
 }
 
 function evaluateTeams(a,b){
-  const sums = (t)=>t.reduce((acc,p)=>{acc[0]+=p.attack; acc[1]+=p.defense; acc[2]+=p.physical; return acc;}, [0,0,0]);
-  const [aA,dA,sA]=sums(a); const [aB,dB,sB]=sums(b);
-  return teamCost(aA,dA,sA,aB,dB,sB);
+  const sums = (t)=>t.reduce((acc,p)=>{acc[0]+=p.attack; acc[1]+=p.defense; acc[2]+=p.physical; acc[3]+=rating(p); return acc;}, [0,0,0,0]);
+  const [aA,dA,sA,rA]=sums(a); const [aB,dB,sB,rB]=sums(b);
+  return teamCost(aA,dA,sA,rA,aB,dB,sB,rB);
 }
 
 function teamsSignature(a,b){
