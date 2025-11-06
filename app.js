@@ -352,30 +352,6 @@ function render(appState){
           <button id="btn-save">${t.saveMatch}</button>
         </div>
       </div>
-      ${appState.showResults ? `
-      <div class="row" style="gap:12px; align-items:flex-start; margin-top:8px">
-        <div style="flex:1" class="card">
-          <h3 style="margin:0 0 6px" class="row" style="align-items:center; gap:8px">
-            <span style="flex:1">${titleA}</span>
-            <button id="rename-a" title="${t.edit}">✎</button>
-          </h3>
-          <small>${t.avg(avg(appState.teamA))}</small>
-          <ul style="margin-top:8px">
-            ${appState.teamA.map(p=>`<li>${icon(p)} ${p.name}${p.isGoalkeeper? ' (GK)':''}</li>`).join('')}
-          </ul>
-        </div>
-        <div style="flex:1" class="card">
-          <h3 style="margin:0 0 6px" class="row" style="align-items:center; gap:8px">
-            <span style="flex:1">${titleB}</span>
-            <button id="rename-b" title="${t.edit}">✎</button>
-          </h3>
-          <small>${t.avg(avg(appState.teamB))}</small>
-          <ul style="margin-top:8px">
-            ${appState.teamB.map(p=>`<li>${icon(p)} ${p.name}${p.isGoalkeeper? ' (GK)':''}</li>`).join('')}
-          </ul>
-        </div>
-      </div>
-      ` : ''}
       ` : ''}
     </div>
   `;
@@ -436,6 +412,65 @@ function render(appState){
     addMatch(titleA, titleB, appState.teamA, appState.teamB);
     alert('Partido guardado');
   });
+
+  // Render bottom drawer for teams visualization
+  const existingDrawer = document.getElementById('results-drawer');
+  if (existingDrawer) existingDrawer.remove();
+  if (appState.teamA.length && appState.teamB.length && appState.showResults){
+    const drawer = document.createElement('div');
+    drawer.id = 'results-drawer';
+    drawer.style.position = 'fixed';
+    drawer.style.left = '0';
+    drawer.style.right = '0';
+    drawer.style.bottom = '0';
+    drawer.style.background = 'var(--card, #fff)';
+    drawer.style.borderTop = '1px solid var(--divider)';
+    drawer.style.boxShadow = '0 -8px 24px rgba(0,0,0,0.08)';
+    drawer.style.padding = '12px';
+    drawer.style.maxHeight = '48vh';
+    drawer.style.overflow = 'auto';
+    drawer.innerHTML = `
+      <div class="row" style="justify-content:space-between; align-items:center">
+        <strong>Resultados</strong>
+        <button id="close-results">${t.hideResults}</button>
+      </div>
+      <div class="row" style="gap:12px; align-items:flex-start; margin-top:8px">
+        <div style="flex:1" class="card">
+          <h3 style="margin:0 0 6px" class="row" style="align-items:center; gap:8px">
+            <span style="flex:1">${titleA}</span>
+            <button id="rename-a" title="${t.edit}">✎</button>
+          </h3>
+          <small>${t.avg(avg(appState.teamA))}</small>
+          <ul style="margin-top:8px">
+            ${appState.teamA.map(p=>`<li>${icon(p)} ${p.name}${p.isGoalkeeper? ' (GK)':''}</li>`).join('')}
+          </ul>
+        </div>
+        <div style="flex:1" class="card">
+          <h3 style="margin:0 0 6px" class="row" style="align-items:center; gap:8px">
+            <span style="flex:1">${titleB}</span>
+            <button id="rename-b" title="${t.edit}">✎</button>
+          </h3>
+          <small>${t.avg(avg(appState.teamB))}</small>
+          <ul style="margin-top:8px">
+            ${appState.teamB.map(p=>`<li>${icon(p)} ${p.name}${p.isGoalkeeper? ' (GK)':''}</li>`).join('')}
+          </ul>
+        </div>
+      </div>
+    `;
+    document.body.appendChild(drawer);
+    drawer.querySelector('#close-results')?.addEventListener('click', ()=>{ appState.showResults = false; render(appState); });
+    // Rebind rename handlers for elements inside drawer
+    document.getElementById('rename-a')?.addEventListener('click', ()=>{
+      const v = prompt('Nombre del equipo A', titleA) || '';
+      const t2 = v.trim();
+      if (t2){ appState.teamATitle = t2; render(appState); }
+    });
+    document.getElementById('rename-b')?.addEventListener('click', ()=>{
+      const v = prompt('Nombre del equipo B', titleB) || '';
+      const t2 = v.trim();
+      if (t2){ appState.teamBTitle = t2; render(appState); }
+    });
+  }
 
   document.getElementById('btn-generate').addEventListener('click', ()=>{
     const n = appState.count;
