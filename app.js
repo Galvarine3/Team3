@@ -675,7 +675,10 @@ function openEditPlayersDialog(){
   const t = i18n();
   const statePlayers = loadPlayers();
   let players = statePlayers.slice();
+  // ensure only one edit overlay exists
+  document.getElementById('edit-overlay')?.remove();
   const overlay = document.createElement('div');
+  overlay.id = 'edit-overlay';
   overlay.style.position = 'fixed';
   overlay.style.inset = '0';
   overlay.style.background = 'rgba(0,0,0,0.5)';
@@ -753,9 +756,11 @@ function openEditPlayersDialog(){
         const name = inp.getAttribute('data-a');
         const p = players.find(x=>x.name===name);
         if (!p) return;
-        const a = parseFloat(inp.value);
-        const d = parseFloat(overlay.querySelector(`input[data-d="${name}"]`).value);
-        const phys = parseFloat(overlay.querySelector(`input[data-p="${name}"]`).value);
+        // accept comma decimals and trim
+        const parseNum = (s)=>{ const v = String(s||'').trim().replace(',', '.'); const n = parseFloat(v); return n; };
+        const a = parseNum(inp.value);
+        const d = parseNum(overlay.querySelector(`input[data-d="${name}"]`).value);
+        const phys = parseNum(overlay.querySelector(`input[data-p="${name}"]`).value);
         if ([a,d,phys].every(v=>!isNaN(v) && v>=1 && v<=10)){
           p.attack = a; p.defense = d; p.physical = phys;
         }
@@ -763,7 +768,7 @@ function openEditPlayersDialog(){
         p.isGoalkeeper = gkCb && gkCb.checked ? true : false;
       });
       savePlayers(players);
-      document.body.removeChild(overlay);
+      try { document.body.removeChild(overlay); } catch {}
       init();
     });
     overlay.querySelectorAll('button[data-rename]')?.forEach(btn=>{
