@@ -278,6 +278,9 @@ function i18n(){
     delete: 'Eliminar',
     result: 'Resultado'
   };
+  // add labels for scoring fields
+  en.attack = 'Attack'; en.defense = 'Defense'; en.skill = 'Skill';
+  es.attack = 'Ataque'; es.defense = 'Defensa'; es.skill = 'Físico';
   return window.__lang === 'en' ? en : es;
 }
 
@@ -609,9 +612,15 @@ function openEditPlayersDialog(){
                   </div>
                 </div>
                 <div class="row" style="margin-top:6px">
-                  <input type="text" data-a="${p.name}" value="${p.attack}" style="width:90px" />
-                  <input type="text" data-d="${p.name}" value="${p.defense}" style="width:90px" />
-                  <input type="text" data-s="${p.name}" value="${p.skill}" style="width:90px" />
+                  <label class="row" style="gap:4px"><small>${t.attack}</small>
+                    <input type="text" data-a="${p.name}" value="${p.attack}" style="width:90px" />
+                  </label>
+                  <label class="row" style="gap:4px"><small>${t.defense}</small>
+                    <input type="text" data-d="${p.name}" value="${p.defense}" style="width:90px" />
+                  </label>
+                  <label class="row" style="gap:4px"><small>${t.skill}</small>
+                    <input type="text" data-s="${p.name}" value="${p.skill}" style="width:90px" />
+                  </label>
                 </div>
               </li>
             `).join('')}
@@ -621,9 +630,9 @@ function openEditPlayersDialog(){
           <h4 style="margin:0 0 8px">Añadir jugador</h4>
           <div class="row">
             <input type="text" id="new-name" placeholder="Nombre" style="flex:1" />
-            <input type="text" id="new-a" placeholder="Ataque" style="width:100px" />
-            <input type="text" id="new-d" placeholder="Defensa" style="width:100px" />
-            <input type="text" id="new-s" placeholder="Físico" style="width:100px" />
+            <input type="text" id="new-a" placeholder="${t.attack}" style="width:100px" />
+            <input type="text" id="new-d" placeholder="${t.defense}" style="width:100px" />
+            <input type="text" id="new-s" placeholder="${t.skill}" style="width:100px" />
             <label class="row"><input type="checkbox" id="new-gk" /> GK</label>
             <button id="add-player">Guardar</button>
           </div>
