@@ -318,8 +318,8 @@ function render(appState){
         <label for="chk-all">${t.selectAll}</label>
       </div>
       <div style="margin-top:8px">
-        <div>${t.playersCount(appState.count)}</div>
-        <input id="slider" type="range" min="2" max="22" step="1" value="${appState.count}" style="width:100%" />
+        <div id="players-count-label">${t.playersCount(appState.count)}</div>
+        <input id="slider" type="range" min="2" max="22" step="1" value="${appState.count}" style="width:100%; height:32px" />
       </div>
 
       <div class="row" style="margin-top:12px; gap:8px">
@@ -389,10 +389,14 @@ function render(appState){
     render(appState);
   });
 
-  document.getElementById('slider').addEventListener('input', (e)=>{
-    appState.count = Math.max(2, Math.min(22, parseInt(e.target.value||'10',10)));
-    render(appState);
+  const sliderEl = document.getElementById('slider');
+  sliderEl.addEventListener('input', (e)=>{
+    const v = Math.max(2, Math.min(22, parseInt(e.target.value||'10',10)));
+    appState.count = v;
+    const label = document.getElementById('players-count-label');
+    if (label) label.textContent = t.playersCount(appState.count);
   });
+  sliderEl.addEventListener('change', ()=>{ render(appState); });
 
   document.getElementById('players').querySelectorAll('input[type="checkbox"]').forEach(cb=>{
     cb.addEventListener('change', ()=>{
