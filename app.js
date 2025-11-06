@@ -49,8 +49,9 @@ async function openInfoModal(){
   const body = data?.[lang]?.body || (lang==='en'
     ? 'Equipos Web helps you create balanced teams and save match history locally in your browser.'
     : 'Equipos Web te ayuda a crear equipos balanceados y guardar el historial de partidos localmente en tu navegador.');
-
+  document.getElementById('info-overlay')?.remove();
   const overlay = document.createElement('div');
+  overlay.id = 'info-overlay';
   overlay.style.position = 'fixed';
   overlay.style.inset = '0';
   overlay.style.background = 'rgba(0,0,0,0.5)';
@@ -66,8 +67,11 @@ async function openInfoModal(){
     </div>
   `;
   document.body.appendChild(overlay);
-  overlay.addEventListener('click', (e)=>{ if (e.target===overlay) document.body.removeChild(overlay); });
-  overlay.querySelector('#btn-close')?.addEventListener('click', ()=> document.body.removeChild(overlay));
+  const doClose = ()=>{ try { document.body.removeChild(overlay); } catch {} };
+  overlay.addEventListener('click', (e)=>{ if (e.target===overlay) doClose(); }, { once: true });
+  const btn = overlay.querySelector('#btn-close');
+  btn?.addEventListener('click', doClose, { once: true });
+  btn?.addEventListener('touchend', (e)=>{ try { e.preventDefault(); } catch {} doClose(); }, { passive: false, once: true });
 }
 const weights = { attack: 0.35, defense: 0.35, physical: 0.30 };
 function rating(p){ return p.attack*weights.attack + p.defense*weights.defense + p.physical*weights.physical; }
@@ -332,7 +336,7 @@ function render(appState){
       <div style="margin-top:12px">
         <div id="players-scroll" style="max-height:420px; overflow:auto">
           <ul id="players">
-            ${appState.players.map(p=>{
+            ${appState.players.slice().sort((a,b)=> a.name.localeCompare(b.name, undefined, { sensitivity:'base' })).map(p=>{
               const checked = appState.selected.has(p.name)?'checked':'';
               const gk = p.isGoalkeeper? ' (GK)' : '';
               return `<li class="row" style="justify-content:space-between; padding:8px 0">
@@ -442,7 +446,7 @@ function render(appState){
           </h3>
           <small>${t.avg(avg(appState.teamA))}</small>
           <ul style="margin-top:8px">
-            ${appState.teamA.map(p=>`<li>${icon(p)} ${p.name}${p.isGoalkeeper? ' (GK)':''}</li>`).join('')}
+            ${(appState.teamA.slice().sort(()=>Math.random()-0.5)).map(p=>`<li>${icon(p)} ${p.name}${p.isGoalkeeper? ' (GK)':''}</li>`).join('')}
           </ul>
         </div>
         <div style="flex:1" class="card">
@@ -452,7 +456,7 @@ function render(appState){
           </h3>
           <small>${t.avg(avg(appState.teamB))}</small>
           <ul style="margin-top:8px">
-            ${appState.teamB.map(p=>`<li>${icon(p)} ${p.name}${p.isGoalkeeper? ' (GK)':''}</li>`).join('')}
+            ${(appState.teamB.slice().sort(()=>Math.random()-0.5)).map(p=>`<li>${icon(p)} ${p.name}${p.isGoalkeeper? ' (GK)':''}</li>`).join('')}
           </ul>
         </div>
       </div>
@@ -605,7 +609,9 @@ if (year) year.textContent = new Date().getFullYear();
 function openHistoryModal(){
   const t = i18n();
   const matches = loadMatches();
+  document.getElementById('history-overlay')?.remove();
   const overlay = document.createElement('div');
+  overlay.id = 'history-overlay';
   overlay.style.position = 'fixed';
   overlay.style.inset = '0';
   overlay.style.background = 'rgba(0,0,0,0.5)';
@@ -641,21 +647,24 @@ function openHistoryModal(){
     </div>
   `;
   document.body.appendChild(overlay);
-  overlay.addEventListener('click', (e)=>{ if (e.target===overlay) document.body.removeChild(overlay); });
-  overlay.querySelector('#btn-close')?.addEventListener('click', ()=> document.body.removeChild(overlay));
-  overlay.querySelector('#btn-clear')?.addEventListener('click', ()=>{ if (confirm('¿Limpiar historial?')){ clearAllMatches(); document.body.removeChild(overlay); openHistoryModal(); }});
+  const doClose = ()=>{ try { document.body.removeChild(overlay); } catch {} };
+  overlay.addEventListener('click', (e)=>{ if (e.target===overlay) doClose(); }, { once: true });
+  const btnClose = overlay.querySelector('#btn-close');
+  btnClose?.addEventListener('click', doClose, { once: true });
+  btnClose?.addEventListener('touchend', (e)=>{ try { e.preventDefault(); } catch {} doClose(); }, { passive: false, once: true });
+  overlay.querySelector('#btn-clear')?.addEventListener('click', ()=>{ if (confirm('¿Limpiar historial?')){ clearAllMatches(); doClose(); openHistoryModal(); }});
   overlay.querySelectorAll('button[data-action]')?.forEach(btn=>{
     btn.addEventListener('click', ()=>{
       const id = Number(btn.getAttribute('data-id'));
       const action = btn.getAttribute('data-action');
       if (action==='delete'){
-        if (confirm('¿Eliminar partido?')){ deleteMatch(id); document.body.removeChild(overlay); openHistoryModal(); }
+        if (confirm('¿Eliminar partido?')){ deleteMatch(id); doClose(); openHistoryModal(); }
       } else if (action==='view'){
         const m = loadMatches().find(x=>x.id===id);
         if (!m) return;
         const text = formatSavedMatchText(m);
         const res = prompt(`${text}\n\n${t.result}:`, m.result||'');
-        if (res!==null){ updateMatchResult(id, res.trim()); document.body.removeChild(overlay); openHistoryModal(); }
+        if (res!==null){ updateMatchResult(id, res.trim()); doClose(); openHistoryModal(); }
       } else if (action==='share'){
         const m = loadMatches().find(x=>x.id===id);
         if (!m) return;
@@ -698,7 +707,7 @@ function openEditPlayersDialog(){
         </div>
         <div id="players-editor-scroll" style="margin-top:8px; max-height:320px; overflow:auto">
           <ul>
-            ${players.map(p=>`
+            ${players.slice().sort((a,b)=> a.name.localeCompare(b.name, undefined, { sensitivity:'base' })).map(p=>`
               <li style="padding:8px 0; border-bottom:1px solid var(--divider)">
                 <div class="row" style="justify-content:space-between">
                   <div class="row">
