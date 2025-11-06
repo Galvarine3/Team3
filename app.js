@@ -444,7 +444,7 @@ function render(appState){
             <span style="flex:1">${titleA}</span>
             <button id="rename-a" title="${t.edit}">✎</button>
           </h3>
-          <small>${t.avg(avg(appState.teamA))}</small>
+          
           <ul style="margin-top:8px">
             ${(appState.teamA.slice().sort(()=>Math.random()-0.5)).map(p=>`<li>${icon(p)} ${p.name}${p.isGoalkeeper? ' (GK)':''}</li>`).join('')}
           </ul>
@@ -454,7 +454,7 @@ function render(appState){
             <span style="flex:1">${titleB}</span>
             <button id="rename-b" title="${t.edit}">✎</button>
           </h3>
-          <small>${t.avg(avg(appState.teamB))}</small>
+          
           <ul style="margin-top:8px">
             ${(appState.teamB.slice().sort(()=>Math.random()-0.5)).map(p=>`<li>${icon(p)} ${p.name}${p.isGoalkeeper? ' (GK)':''}</li>`).join('')}
           </ul>
