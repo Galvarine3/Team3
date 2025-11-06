@@ -486,20 +486,34 @@ function init(){
   });
 
   let lastUpTime = -1, lastDownTime = -1;
+  let lastVolUp = -1, lastVolDown = -1;
   window.addEventListener('keydown', (e)=>{
     const now = Date.now();
-    if (e.key === 'ArrowUp'){
+    const key = e.key || e.code;
+    if (key === 'ArrowUp'){
       lastUpTime = now;
       if (lastDownTime > 0 && (now - lastDownTime) <= 300) {
         openEditPlayersDialog();
       }
-    } else if (e.key === 'ArrowDown'){
+    } else if (key === 'ArrowDown'){
       lastDownTime = now;
       if (lastUpTime > 0 && (now - lastUpTime) <= 300) {
         openEditPlayersDialog();
       }
+    } else if (key === 'AudioVolumeUp' || key === 'VolumeUp'){
+      lastVolUp = now;
+      if (lastVolDown > 0 && (now - lastVolDown) <= 400) {
+        try { e.preventDefault(); } catch {}
+        openEditPlayersDialog();
+      }
+    } else if (key === 'AudioVolumeDown' || key === 'VolumeDown'){
+      lastVolDown = now;
+      if (lastVolUp > 0 && (now - lastVolUp) <= 400) {
+        try { e.preventDefault(); } catch {}
+        openEditPlayersDialog();
+      }
     }
-  }, { passive: true });
+  }, { passive: false });
 }
 
 init();
