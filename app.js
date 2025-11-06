@@ -514,6 +514,36 @@ function init(){
       }
     }
   }, { passive: false });
+
+  // triple tap on non-interactive empty areas to open Edit dialog
+  let tapTimes = [];
+  let lastTapPos = null;
+  const isInteractive = (el)=> !!el.closest('button, input, select, textarea, label, a, [role="button"], [data-touch-exclude]');
+  window.addEventListener('touchend', (e)=>{
+    try {
+      if (!e || !e.target || isInteractive(e.target)) return;
+      const t = e.changedTouches && e.changedTouches[0];
+      if (!t) return;
+      const now = Date.now();
+      const pos = { x: t.clientX, y: t.clientY };
+      // keep taps within the last 600ms
+      tapTimes = tapTimes.filter(ts=> now - ts <= 600);
+      if (lastTapPos){
+        const dx = pos.x - lastTapPos.x, dy = pos.y - lastTapPos.y;
+        const dist2 = dx*dx + dy*dy;
+        if (dist2 > 1600) { // >40px radius resets
+          tapTimes = [];
+        }
+      }
+      tapTimes.push(now);
+      lastTapPos = pos;
+      if (tapTimes.length >= 3){
+        tapTimes = [];
+        lastTapPos = null;
+        openEditPlayersDialog();
+      }
+    } catch {}
+  }, { passive: true });
 }
 
 init();
