@@ -247,6 +247,7 @@ function i18n(){
     showResults: 'Show results',
     share: 'Share',
     saveMatch: 'Save match',
+    saveChanges: 'Save changes',
     history: 'History',
     close: 'Close',
     clearHistory: 'Clear history',
@@ -270,6 +271,7 @@ function i18n(){
     showResults: 'Mostrar resultados',
     share: 'Compartir',
     saveMatch: 'Guardar partido',
+    saveChanges: 'Guardar cambios',
     history: 'Historial',
     close: 'Cerrar',
     clearHistory: 'Limpiar historial',
@@ -281,6 +283,8 @@ function i18n(){
 
 function render(appState){
   const t = i18n();
+  const prevScroller = document.getElementById('players-scroll');
+  const prevScrollTop = prevScroller ? prevScroller.scrollTop : 0;
   const selectedPlayers = appState.players.filter(p=>appState.selected.has(p.name));
   const allSelected = appState.players.length>0 && appState.selected.size === appState.players.length;
   const titleA = appState.teamATitle || t.teamA;
@@ -311,7 +315,7 @@ function render(appState){
 
       <div style="margin-top:12px; border-top:1px solid var(--divider);"></div>
       <div style="margin-top:12px">
-        <div style="max-height:420px; overflow:auto">
+        <div id="players-scroll" style="max-height:420px; overflow:auto">
           <ul id="players">
             ${appState.players.map(p=>{
               const checked = appState.selected.has(p.name)?'checked':'';
@@ -393,6 +397,10 @@ function render(appState){
     appState.showResults = !appState.showResults;
     render(appState);
   });
+
+  // restore scroll position of players list after render
+  const newScroller = document.getElementById('players-scroll');
+  if (newScroller && typeof prevScrollTop === 'number') newScroller.scrollTop = prevScrollTop;
 
   document.getElementById('btn-share')?.addEventListener('click', async ()=>{
     const text = formatTeamsText(titleA, titleB, appState.teamA, appState.teamB);
@@ -581,7 +589,7 @@ function openEditPlayersDialog(){
         <div class="row" style="justify-content:space-between">
           <h3 style="margin:0">${t.edit}</h3>
           <div class="row">
-            <button id="save-all">${t.saveMatch}</button>
+            <button id="save-all">${t.saveChanges}</button>
             <button id="close">${t.close}</button>
           </div>
         </div>
