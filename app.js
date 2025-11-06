@@ -643,6 +643,8 @@ function openEditPlayersDialog(){
   overlay.style.display = 'grid';
   overlay.style.placeItems = 'center';
   function renderDialog(){
+    const prevScroller = overlay.querySelector('#players-editor-scroll');
+    const prevScrollTop = prevScroller ? prevScroller.scrollTop : 0;
     overlay.innerHTML = `
       <div class="card" style="max-width:860px; width:96vw; max-height:86vh; overflow:auto">
         <div class="row" style="justify-content:space-between">
@@ -652,7 +654,7 @@ function openEditPlayersDialog(){
             <button id="close">${t.close}</button>
           </div>
         </div>
-        <div style="margin-top:8px; max-height:320px; overflow:auto">
+        <div id="players-editor-scroll" style="margin-top:8px; max-height:320px; overflow:auto">
           <ul>
             ${players.map(p=>`
               <li style="padding:8px 0; border-bottom:1px solid var(--divider)">
@@ -695,13 +697,17 @@ function openEditPlayersDialog(){
         </div>
       </div>
     `;
+    const newScroller = overlay.querySelector('#players-editor-scroll');
+    if (newScroller && typeof prevScrollTop === 'number') newScroller.scrollTop = prevScrollTop;
   }
   renderDialog();
   document.body.appendChild(overlay);
   overlay.addEventListener('click', (e)=>{ if (e.target===overlay) document.body.removeChild(overlay); });
 
   function bindEditDialogEvents(){
-    overlay.querySelector('#close')?.addEventListener('click', ()=> document.body.removeChild(overlay));
+    const doClose = ()=>{ try { document.body.removeChild(overlay); } catch {} };
+    overlay.querySelector('#close')?.addEventListener('click', doClose, { once: true });
+    overlay.querySelector('#close')?.addEventListener('touchend', (e)=>{ e.preventDefault?.(); doClose(); }, { passive: false, once: true });
     overlay.querySelector('#save-all')?.addEventListener('click', ()=>{
       const aInputs = overlay.querySelectorAll('input[data-a]');
       aInputs.forEach(inp=>{
