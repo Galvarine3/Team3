@@ -753,6 +753,8 @@ function openEditPlayersDialog(){
   }
   renderDialog();
   document.body.appendChild(overlay);
+  // Bind events for the initial render so buttons work immediately
+  bindEditDialogEvents();
   overlay.addEventListener('click', (e)=>{ if (e.target===overlay) document.body.removeChild(overlay); });
 
   function bindEditDialogEvents(){
