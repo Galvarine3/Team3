@@ -806,13 +806,16 @@ function openEditPlayersDialog(){
     });
     overlay.querySelector('#add-player')?.addEventListener('click', ()=>{
       const name = (overlay.querySelector('#new-name').value || '').trim();
-      const a = parseFloat(overlay.querySelector('#new-a').value);
-      const d = parseFloat(overlay.querySelector('#new-d').value);
-      const phys = parseFloat(overlay.querySelector('#new-p').value);
+      const parseNum = (s)=>{ const v = String(s||'').trim().replace(',', '.'); const n = parseFloat(v); return n; };
+      const a = parseNum(overlay.querySelector('#new-a').value);
+      const d = parseNum(overlay.querySelector('#new-d').value);
+      const phys = parseNum(overlay.querySelector('#new-p').value);
       const gk = !!overlay.querySelector('#new-gk').checked;
       if (!name || players.some(p=>p.name.toLowerCase()===name.toLowerCase())) return;
       if ([a,d,phys].some(v=>isNaN(v) || v<1 || v>10)) return;
       players.push({ name, attack:a, defense:d, physical:phys, isGoalkeeper:gk });
+      // persist immediately so the addition is effective without requiring "Aplicar Cambios"
+      savePlayers(players);
       renderDialog();
       bindEditDialogEvents();
     });
